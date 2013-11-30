@@ -126,6 +126,13 @@ int instruction_size(quint8 *buffer, std::size_t size) {
 
 }
 
+
+void QDisassemblyView::contextMenuEvent(QContextMenuEvent *event){
+    updateSelectedAddress(event->pos());
+    repaint();
+}
+
+
 //------------------------------------------------------------------------------
 // Name: QDisassemblyView
 // Desc: constructor
@@ -762,15 +769,14 @@ void QDisassemblyView::paintEvent(QPaintEvent *) {
 			return;
 		}
 
-		/*
+
 		if(selectedAddress() == address) {
 			painter.fillRect(0, y, width(), line_height, palette().highlight());
 		} else
-		*/
-		if(row_index & 1) {
-			// draw alternating line backgrounds
-			painter.fillRect(0, y, width(), line_height, alternated_base_color);
-		}
+            if(row_index & 1) {
+                // draw alternating line backgrounds
+                painter.fillRect(0, y, width(), line_height, alternated_base_color);
+            }
 
 		if(analyzer) {
 			draw_function_markers(painter, address, l2, y, insn_size, analyzer);
@@ -1142,18 +1148,18 @@ void QDisassemblyView::mouseReleaseEvent(QMouseEvent *event) {
 	moving_line3_ = false;
 
 	setCursor(Qt::ArrowCursor);
-	repaint();
+    repaint();
 }
 
 //------------------------------------------------------------------------------
 // Name: updateSelectedAddress
 // Desc:
 //------------------------------------------------------------------------------
-void QDisassemblyView::updateSelectedAddress(QMouseEvent *event) {
+void QDisassemblyView::updateSelectedAddress(const QPoint &pos) {
 
 	if(region_) {
 		bool ok;
-		const edb::address_t address = addressFromPoint(event->pos());
+        const edb::address_t address = addressFromPoint(pos);
 		const int size               = get_instruction_size(address, &ok);
 
 		if(ok) {
@@ -1181,10 +1187,10 @@ void QDisassemblyView::mousePressEvent(QMouseEvent *event) {
 			} else if(near_line(event->x(), line3())) {
 				moving_line3_ = true;
 			} else {
-				updateSelectedAddress(event);
+                updateSelectedAddress(event->pos());
 			}
 		} else {
-			updateSelectedAddress(event);
+            updateSelectedAddress(event->pos());
 		}
 	}
 }

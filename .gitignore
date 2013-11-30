@@ -1,0 +1,15 @@
+Makefile
+src/QHexView
+src/edisassm
+src/qhexview.cpp
+src/qhexview.h
+.release-shared
+.debug-shared
+symbols
+*.o
+*.user
+*.so
+*.*~
+edb
+.svn
+QHexViewDir

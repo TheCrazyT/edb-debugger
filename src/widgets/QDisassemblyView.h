@@ -53,6 +53,7 @@ public:
 	edb::address_t addressFromPoint(const QPoint &pos) const;
 	edb::address_t selectedAddress() const;
 	int selectedSize() const;
+    virtual void contextMenuEvent(QContextMenuEvent *event);
 
 public Q_SLOTS:
 	void setFont(const QFont &f);
@@ -92,7 +93,7 @@ private:
 	int line_height() const;
 	void draw_function_markers(QPainter &painter, edb::address_t address, int l2, int y, int insn_size, IAnalyzer *analyzer);
 	void updateScrollbars();
-	void updateSelectedAddress(QMouseEvent *event);
+    void updateSelectedAddress(const QPoint &pos);
 
 private:
 	IRegion::pointer         region_;

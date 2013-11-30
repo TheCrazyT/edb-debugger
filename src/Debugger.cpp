@@ -1322,7 +1322,9 @@ void Debugger::on_cpuView_customContextMenuRequested(const QPoint &pos) {
 	menu.addAction(tr("&Remove Breakpoint"), this, SLOT(mnuCPURemoveBreakpoint()));
 
 	add_plugin_context_menu(&menu, &IPlugin::cpu_context_menu);
-
+    QContextMenuEvent::Reason reason = QContextMenuEvent::Keyboard;
+    QContextMenuEvent* ev = new QContextMenuEvent(reason,pos);
+    ui.cpuView->contextMenuEvent(ev);
 	menu.exec(ui.cpuView->viewport()->mapToGlobal(pos));
 }
 
