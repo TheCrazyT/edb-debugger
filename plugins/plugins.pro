@@ -18,7 +18,8 @@ SUBDIRS += \
 	ROPTool \
 	References \
 	SessionManager \
-	SymbolViewer
+	SymbolViewer \
+        Patches
 
 unix {
 	!macx {

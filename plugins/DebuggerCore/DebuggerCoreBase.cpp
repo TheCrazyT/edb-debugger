@@ -95,6 +95,15 @@ void DebuggerCoreBase::remove_breakpoint(edb::address_t address) {
 }
 
 //------------------------------------------------------------------------------
+// Name: get_code_patches
+// Desc: gets patched areas of code
+// Note:
+//------------------------------------------------------------------------------
+QList<IPatch> DebuggerCoreBase::get_code_patches(IRegion::pointer address){
+    return QList<IPatch>();
+}
+
+//------------------------------------------------------------------------------
 // Name: backup_breakpoints
 // Desc: returns a copy of the BP list, these count as references to the BPs
 //       preventing full removal until this list is destructed.

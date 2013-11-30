@@ -45,6 +45,9 @@ public:
 	virtual void remove_breakpoint(edb::address_t address);
 
 public:
+    virtual QList<IPatch> get_code_patches(IRegion::pointer address);
+
+public:
 	virtual edb::pid_t pid() const;
 
 protected:

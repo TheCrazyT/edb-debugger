@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "IBreakpoint.h"
 #include "IDebugEvent.h"
 #include "IRegion.h"
+#include "IPatch.h"
 #include "Process.h"
 #include "Module.h"
 
@@ -103,6 +104,10 @@ public:
 	virtual int                  breakpoint_size() const = 0;
 	virtual void                 clear_breakpoints() = 0;
 	virtual void                 remove_breakpoint(edb::address_t address) = 0;
+
+public:
+    // get modified code in memory segment
+    virtual QList<IPatch> get_code_patches(IRegion::pointer address) = 0;
 
 public:
 	virtual QString format_pointer(edb::address_t address) const = 0;
