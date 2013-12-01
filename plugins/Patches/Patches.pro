@@ -3,11 +3,13 @@ include(../plugins.pri)
 
 HEADERS += \
     Patches.h \
-    DialogPatches.h
+    DialogPatches.h \
+    Patch.h
 
 SOURCES += \
     Patches.cpp \
-    DialogPatches.cpp
+    DialogPatches.cpp \
+    Patch.cpp
 
 FORMS += \
     DialogPatches.ui

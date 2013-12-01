@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "IDebugEvent.h"
 #include "IRegion.h"
 #include "IPatch.h"
+#include "IPatches.h"
 #include "Process.h"
 #include "Module.h"
 
@@ -42,6 +43,7 @@ class State;
 class IDebuggerCore {
 public:
 	typedef QHash<edb::address_t, IBreakpoint::pointer> BreakpointList;
+    typedef QHash<edb::address_t, IPatch::pointer> PatchList;
 	
 public:
 	virtual ~IDebuggerCore() {}
@@ -91,6 +93,10 @@ public:
 	virtual bool read_pages(edb::address_t address, void *buf, std::size_t count) = 0;
 
 public:
+    //functions for patches
+    virtual void create_patch(edb::address_t address, const void *buf, std::size_t len) = 0;
+
+public:
 	// thread support stuff (optional)
 	virtual QList<edb::tid_t> thread_ids() const            { return QList<edb::tid_t>(); }
 	virtual edb::tid_t        active_thread() const         { return static_cast<edb::tid_t>(-1); }
@@ -107,7 +113,8 @@ public:
 
 public:
     // get modified code in memory segment
-    virtual QList<IPatch> get_code_patches(IRegion::pointer address) = 0;
+    virtual PatchList get_code_patches(IRegion::pointer address) = 0;
+    virtual PatchList get_code_patches() = 0;
 
 public:
 	virtual QString format_pointer(edb::address_t address) const = 0;

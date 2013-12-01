@@ -204,7 +204,7 @@ private:
 	void apply_default_fonts();
 	void apply_default_show_separator();
 	void cleanup_debugger();
-	void cpu_fill(quint8 byte);
+    void cpu_fill(quint8 byte,bool storePatches);
 	void create_data_tab();
 	void delete_data_tab();
 	void detach_from_process(DETACH_ACTION kill);

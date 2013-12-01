@@ -74,6 +74,7 @@ signals:
 	void regionChanged();
 
 private:
+    bool isAddressPatched(edb::address_t address);
 	QString formatAddress(edb::address_t address) const;
 	QString format_instruction_bytes(const edb::Instruction &insn) const;
 	QString format_instruction_bytes(const edb::Instruction &insn, int maxStringPx, const QFontMetricsF &metrics) const;

@@ -1,15 +1,23 @@
-#include <QtGlobal>
 #ifndef IPATCH_H
 #define IPATCH_H
 
-class IPatch
-{
-public:
-    IPatch();
+#include "Types.h"
+#include <QList>
+#include <QSharedPointer>
+#include<IRegion.h>
 
-    bool isActive();
-    edb::address_t getAddress();
-    QList<quint8> getBytes();
+class IPatch{
+public:
+    typedef QSharedPointer<IPatch> pointer;
+
+public:
+    virtual ~IPatch() {}
+
+public:
+    virtual bool isActive() const = 0;
+    virtual edb::address_t getAddress() const = 0;
+    virtual const void *  getBytes() const = 0;
+    virtual std::size_t getSize() const = 0;
 };
 
 #endif // IPATCH_H

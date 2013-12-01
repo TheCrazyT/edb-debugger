@@ -44,6 +44,8 @@ HEADERS += \
 	Expression.h \
 	HexStringValidator.h \
 	IAnalyzer.h \
+        IPatch.h \
+        IPatches.h \
 	IBinary.h \
 	IBreakpoint.h \
 	IDebugEvent.h \

@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class ArchProcessor;
 class Configuration;
 class IAnalyzer;
+class IPatches;
 class IBinary;
 class IDebugEventHandler;
 class IDebuggerCore;
@@ -140,6 +141,9 @@ EDB_EXPORT IDebugEventHandler *debug_event_handler();
 EDB_EXPORT IAnalyzer *set_analyzer(IAnalyzer *p);
 EDB_EXPORT IAnalyzer *analyzer();
 
+EDB_EXPORT IPatches *set_patches(IPatches *p);
+EDB_EXPORT IPatches *patches();
+
 EDB_EXPORT ISessionFile *set_session_file_handler(ISessionFile *p);
 EDB_EXPORT ISessionFile *session_file_handler();
 
@@ -166,6 +170,7 @@ EDB_EXPORT void push_value(State *state, reg_t value);
 EDB_EXPORT void register_binary_info(IBinary::create_func_ptr_t fptr);
 
 EDB_EXPORT bool overwrite_check(address_t address, unsigned int size);
+void modify_bytes(address_t address, unsigned int size, QByteArray &bytes, quint8 fill,bool storePatch);
 EDB_EXPORT void modify_bytes(address_t address, unsigned int size, QByteArray &bytes, quint8 fill);
 
 EDB_EXPORT QByteArray get_file_md5(const QString &s);

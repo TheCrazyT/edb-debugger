@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ArchProcessor.h"
 #include "IDebuggerCore.h"
 #include "ISymbolManager.h"
+#include "IPatch.h"
 #include "Instruction.h"
 #include "SyntaxHighlighter.h"
 #include "Util.h"
@@ -693,6 +694,17 @@ void QDisassemblyView::draw_function_markers(QPainter &painter, edb::address_t a
 	}
 }
 
+bool QDisassemblyView::isAddressPatched(edb::address_t address){
+    IDebuggerCore::PatchList patches = edb::v1::debugger_core->get_code_patches();
+
+    Q_FOREACH(const IPatch::pointer &patch, patches) {
+        if((patch->getAddress() <= address) && (patch->getAddress() + patch->getSize() > address)){
+            return true;
+        }
+    }
+    return false;
+}
+
 //------------------------------------------------------------------------------
 // Name: paintEvent
 // Desc:
@@ -734,7 +746,8 @@ void QDisassemblyView::paintEvent(QPaintEvent *) {
 	const QBrush divider_color         = palette().shadow();
 	const QPen bytes_pen               = bytes_color.color();
 	const QPen divider_pen             = divider_color.color();
-	const QPen address_pen(Qt::red);
+    const QPen patch_pen(Qt::red);
+    const QPen address_pen(Qt::red);
 
 	IAnalyzer *const analyzer = edb::v1::analyzer();
 
@@ -745,7 +758,7 @@ void QDisassemblyView::paintEvent(QPaintEvent *) {
 
 		quint8 buf[edb::Instruction::MAX_SIZE + 1];
 
-		// do the longest read we can while still not passing the region end
+        // do the longest read we can while still not passing the region end
 		int buf_size = qMin<edb::address_t>((region_->end() - address), sizeof(buf));
 
 		// read in the bytes...
@@ -815,7 +828,12 @@ void QDisassemblyView::paintEvent(QPaintEvent *) {
 			address_buffer);
 
 		// draw the data bytes
-		painter.setPen(bytes_pen);
+        if(isAddressPatched(address)){
+            painter.setPen(patch_pen);
+        }else{
+            painter.setPen(bytes_pen);
+        }
+
 		painter.drawText(
 			l1 + (font_width_ / 2),
 			y,
@@ -1084,7 +1102,7 @@ void QDisassemblyView::mouseDoubleClickEvent(QMouseEvent *event) {
 	if(region_) {
 		if(event->button() == Qt::LeftButton) {
 			if(event->x() < line1()) {
-				const edb::address_t address = addressFromPoint(event->pos());
+                const edb::address_t address = addressFromPoint(event->pos());
 
 				if(region_->contains(address)) {
 					emit breakPointToggled(address);

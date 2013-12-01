@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "DebuggerCoreBase.h"
 #include "X86Breakpoint.h"
+#include "edb.h"
+#include "IPatches.h"
 
 //------------------------------------------------------------------------------
 // Name: DebuggerCoreBase
@@ -95,12 +97,49 @@ void DebuggerCoreBase::remove_breakpoint(edb::address_t address) {
 }
 
 //------------------------------------------------------------------------------
+// Name: create_patches
+// Desc: stores a patch
+// Note:
+//------------------------------------------------------------------------------
+void DebuggerCoreBase::create_patch(edb::address_t address, const void *buf, std::size_t len){
+    if(edb::v1::patches()!=NULL){
+        IPatch::pointer patch(edb::v1::patches()->create_patch(address,buf,len));
+        patches_[address] = patch;
+    }
+}
+
+//------------------------------------------------------------------------------
 // Name: get_code_patches
 // Desc: gets patched areas of code
 // Note:
 //------------------------------------------------------------------------------
-QList<IPatch> DebuggerCoreBase::get_code_patches(IRegion::pointer address){
-    return QList<IPatch>();
+IDebuggerCore::PatchList DebuggerCoreBase::get_code_patches(){
+    return patches_;
+}
+
+//------------------------------------------------------------------------------
+// Name: get_code_patches
+// Desc: gets patched areas of code
+// Note:
+//------------------------------------------------------------------------------
+IDebuggerCore::PatchList DebuggerCoreBase::get_code_patches(IRegion::pointer address){
+    PatchList result = PatchList();
+
+    Q_FOREACH(const IPatch::pointer &patch, patches_) {
+        if(patch->getRegion() == address){
+            result[patch->getAddress()] = patch;
+        }
+    }
+
+    return result;
+}
+
+//------------------------------------------------------------------------------
+// Name: clear_patches
+// Desc: removes all patches
+//------------------------------------------------------------------------------
+void DebuggerCoreBase::clear_patches() {
+    patches_.clear();
 }
 
 //------------------------------------------------------------------------------

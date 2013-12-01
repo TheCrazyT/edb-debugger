@@ -45,7 +45,10 @@ public:
 	virtual void remove_breakpoint(edb::address_t address);
 
 public:
-    virtual QList<IPatch> get_code_patches(IRegion::pointer address);
+    virtual PatchList get_code_patches();
+    virtual PatchList get_code_patches(IRegion::pointer address);
+    virtual void clear_patches();
+    virtual void create_patch(edb::address_t address, const void *buf, std::size_t len);
 
 public:
 	virtual edb::pid_t pid() const;
@@ -57,6 +60,7 @@ protected:
 	edb::tid_t      active_thread_;
 	edb::pid_t      pid_;
 	BreakpointList  breakpoints_;
+    PatchList   patches_;
 };
 
 #endif

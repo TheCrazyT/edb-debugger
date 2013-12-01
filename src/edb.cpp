@@ -56,6 +56,7 @@ namespace {
 
 	QAtomicPointer<IDebugEventHandler> g_DebugEventHandler = 0;
 	QAtomicPointer<IAnalyzer>          g_Analyzer          = 0;
+    QAtomicPointer<IPatches>           g_Patches           = 0;
 	QAtomicPointer<ISessionFile>       g_SessionHandler    = 0;
 	QHash<QString, QObject *>          g_GeneralPlugins;
 	BinaryInfoList                     g_BinaryInfoList;
@@ -210,6 +211,28 @@ IAnalyzer *analyzer() {
 	return g_Analyzer;
 #endif
 }
+
+//------------------------------------------------------------------------------
+// Name: set_patches
+// Desc:
+//------------------------------------------------------------------------------
+IPatches *set_patches(IPatches *p) {
+    Q_ASSERT(p);
+    return g_Patches.fetchAndStoreAcquire(p);
+}
+
+//------------------------------------------------------------------------------
+// Name: patches
+// Desc:
+//------------------------------------------------------------------------------
+IPatches *patches() {
+#if QT_VERSION >= 0x050000
+    return g_Patches.load();
+#else
+    return g_Patches;
+#endif
+}
+
 
 //------------------------------------------------------------------------------
 // Name: set_session_file_handler
@@ -972,11 +995,20 @@ bool overwrite_check(address_t address, unsigned int size) {
 	return true;
 }
 
+
 //------------------------------------------------------------------------------
 // Name: modify_bytes
 // Desc:
 //------------------------------------------------------------------------------
 void modify_bytes(address_t address, unsigned int size, QByteArray &bytes, quint8 fill) {
+    modify_bytes(address, size, bytes, fill,false);
+}
+
+//------------------------------------------------------------------------------
+// Name: modify_bytes
+// Desc:
+//------------------------------------------------------------------------------
+void modify_bytes(address_t address, unsigned int size, QByteArray &bytes, quint8 fill, bool storePatch) {
 
 	if(size != 0) {
 		// fill bytes
@@ -984,7 +1016,10 @@ void modify_bytes(address_t address, unsigned int size, QByteArray &bytes, quint
 			bytes.push_back(fill);
 		}
 
-		debugger_core->write_bytes(address, bytes.data(), size);
+        if(storePatch){
+            debugger_core->create_patch(address,bytes.data(), size);
+        }
+        debugger_core->write_bytes(address, bytes.data(), size);
 
 		// do a refresh, not full update
 		Debugger *const gui = ui();

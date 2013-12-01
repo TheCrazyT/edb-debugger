@@ -616,6 +616,7 @@ void DebuggerCore::detach() {
 		stop_threads();
 
 		clear_breakpoints();
+        clear_patches();
 
 		Q_FOREACH(edb::tid_t thread, thread_ids()) {
 			if(ptrace(PTRACE_DETACH, thread, 0, 0) == 0) {
@@ -634,6 +635,7 @@ void DebuggerCore::detach() {
 void DebuggerCore::kill() {
 	if(attached()) {
 		clear_breakpoints();
+        clear_patches();
 
 		ptrace(PTRACE_KILL, pid(), 0, 0);
 

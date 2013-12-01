@@ -3,10 +3,14 @@
 
 
 #include "IPlugin.h"
+#include "IPatches.h"
+#include "IPatch.h"
+#include "Symbol.h"
+#include "Types.h"
 
 class QMenu;
 class QDialog;
-class Patches : public QObject, public IPlugin
+class Patches : public QObject, public IPatches, public IPlugin
 {
     Q_OBJECT
     Q_INTERFACES(IPlugin)
@@ -16,11 +20,15 @@ class Patches : public QObject, public IPlugin
     Q_CLASSINFO("author", "CrazyT")
     Q_CLASSINFO("url", "")
 
+private:
+    virtual void private_init();
 
 public:
-    Patches();
     virtual ~Patches();
+    Patches();
 
+public:
+    virtual IPatch::pointer create_patch(edb::address_t address, const void *buf, std::size_t len) const;
 public:
     virtual QMenu *menu(QWidget *parent = 0);
 
@@ -31,6 +39,7 @@ public Q_SLOTS:
 private:
     QDialog *dialog_;
     QMenu * menu_;
+
 signals:
     
 public slots:

@@ -1457,7 +1457,7 @@ void Debugger::mnuDumpSaveToFile() {
 // Name: cpu_fill
 // Desc:
 //------------------------------------------------------------------------------
-void Debugger::cpu_fill(quint8 byte) {
+void Debugger::cpu_fill(quint8 byte,bool storePatches) {
 	const edb::address_t address = ui.cpuView->selectedAddress();
 	const unsigned int size      = ui.cpuView->selectedSize();
 
@@ -1465,7 +1465,10 @@ void Debugger::cpu_fill(quint8 byte) {
 		if(edb::v1::overwrite_check(address, size)) {
 			QByteArray bytes(size, byte);
 
-			edb::v1::debugger_core->write_bytes(address, bytes.data(), size);
+            if(storePatches){
+                edb::v1::debugger_core->create_patch(address, bytes.data(), size);
+            }
+            edb::v1::debugger_core->write_bytes(address, bytes.data(), size);
 
 			// do a refresh, not full update
 			refresh_gui();
@@ -1512,7 +1515,7 @@ void Debugger::mnuCPURemoveBreakpoint() {
 // Desc:
 //------------------------------------------------------------------------------
 void Debugger::mnuCPUFillZero() {
-	cpu_fill(0x00);
+    cpu_fill(0x00,true);
 }
 
 //------------------------------------------------------------------------------
@@ -1521,7 +1524,7 @@ void Debugger::mnuCPUFillZero() {
 //------------------------------------------------------------------------------
 void Debugger::mnuCPUFillNop() {
 	// TODO: get system independent nop-code
-	cpu_fill(0x90);
+    cpu_fill(0x90,true);
 }
 
 //------------------------------------------------------------------------------
@@ -1573,7 +1576,7 @@ void Debugger::modify_bytes(const T &hexview) {
 
 		if(edb::v1::get_binary_string_from_user(bytes, QT_TRANSLATE_NOOP("edb", "Edit Binary String"), size)) {
 			if(edb::v1::overwrite_check(address, size)) {
-				edb::v1::modify_bytes(address, size, bytes, 0x00);
+                edb::v1::modify_bytes(address, size, bytes, 0x00,true);
 			}
 		}
 	}

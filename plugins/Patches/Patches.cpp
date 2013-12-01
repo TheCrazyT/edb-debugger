@@ -1,4 +1,5 @@
 #include "Patches.h"
+#include "Patch.h"
 #include "DialogPatches.h"
 #include "edb.h"
 #include <QMenu>
@@ -9,6 +10,13 @@ Patches::~Patches(){
     delete dialog_;
 }
 
+//------------------------------------------------------------------------------
+// Name: private_init
+// Desc:
+//------------------------------------------------------------------------------
+void Patches::private_init() {
+    edb::v1::set_patches(this);
+}
 
 //------------------------------------------------------------------------------
 // Name: menu
@@ -25,6 +33,16 @@ QMenu *Patches::menu(QWidget *parent) {
 
     return menu_;
 }
+
+
+//------------------------------------------------------------------------------
+// Name: createPatch
+// Desc:
+//------------------------------------------------------------------------------
+IPatch::pointer Patches::create_patch(edb::address_t address, const void *buf, std::size_t len) const{
+    return IPatch::pointer(new Patch(true,address,buf,len));
+}
+
 //------------------------------------------------------------------------------
 // Name: show_menu
 // Desc:
