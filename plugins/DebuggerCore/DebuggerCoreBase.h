@@ -48,7 +48,7 @@ public:
     virtual PatchList get_code_patches();
     virtual PatchList get_code_patches(IRegion::pointer address);
     virtual void clear_patches();
-    virtual void create_patch(edb::address_t address, const void *buf, std::size_t len);
+    virtual void create_patch(edb::address_t address, const void *orgBuf,const void *buf, std::size_t len);
 
 public:
 	virtual edb::pid_t pid() const;

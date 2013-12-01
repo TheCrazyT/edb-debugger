@@ -94,7 +94,7 @@ public:
 
 public:
     //functions for patches
-    virtual void create_patch(edb::address_t address, const void *buf, std::size_t len) = 0;
+    virtual void create_patch(edb::address_t address, const void *orgBuf,const void *buf, std::size_t len) = 0;
 
 public:
 	// thread support stuff (optional)

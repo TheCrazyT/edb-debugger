@@ -1466,7 +1466,10 @@ void Debugger::cpu_fill(quint8 byte,bool storePatches) {
 			QByteArray bytes(size, byte);
 
             if(storePatches){
-                edb::v1::debugger_core->create_patch(address, bytes.data(), size);
+                quint8 *orgBytes=new quint8[size];
+                if(edb::v1::debugger_core->read_bytes(address,orgBytes,size)){
+                    edb::v1::debugger_core->create_patch(address,orgBytes,bytes.data(), size);
+                }
             }
             edb::v1::debugger_core->write_bytes(address, bytes.data(), size);
 

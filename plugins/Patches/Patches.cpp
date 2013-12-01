@@ -1,6 +1,7 @@
 #include "Patches.h"
 #include "Patch.h"
 #include "DialogPatches.h"
+#include "IDebuggerCore.h"
 #include "edb.h"
 #include <QMenu>
 
@@ -39,8 +40,39 @@ QMenu *Patches::menu(QWidget *parent) {
 // Name: createPatch
 // Desc:
 //------------------------------------------------------------------------------
-IPatch::pointer Patches::create_patch(edb::address_t address, const void *buf, std::size_t len) const{
-    return IPatch::pointer(new Patch(true,address,buf,len));
+IPatch::pointer Patches::create_patch(edb::address_t address,const void *orgBuf, const void *buf, std::size_t len) const{
+    IDebuggerCore::PatchList patches = edb::v1::debugger_core->get_code_patches();
+
+    Q_FOREACH(const IPatch::pointer &p, patches) {
+        QSharedPointer<Patch> patch = p.staticCast<Patch>();
+
+        if((address>=patch->getAddress())&&(address<patch->getAddress()+patch->getSize())){
+            if(patch->getSize()<len){
+                patch->setSize(len);
+            }
+
+
+            quint8 * oldPatchBuf = (quint8 *)patch->getBytes();
+            quint8 * newPatchBuf = new quint8[patch->getSize()];
+            quint8 * bufp = (quint8 *)buf;
+            for(uint i=0;i<patch->getSize();i++){
+                if((patch->getAddress()+i>=address)&&(patch->getAddress()+i<address+len)){
+                    *newPatchBuf = *bufp;
+                    bufp++;
+                }else{
+                    *newPatchBuf = *oldPatchBuf;
+                    oldPatchBuf++;
+                }
+                newPatchBuf++;
+            }
+
+            patches.remove(patch->getAddress());
+
+            return IPatch::pointer(patch);
+        }
+    }
+
+    return IPatch::pointer(new Patch(true,address,orgBuf,buf,len));
 }
 
 //------------------------------------------------------------------------------

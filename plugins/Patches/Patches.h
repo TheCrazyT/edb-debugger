@@ -28,7 +28,7 @@ public:
     Patches();
 
 public:
-    virtual IPatch::pointer create_patch(edb::address_t address, const void *buf, std::size_t len) const;
+    virtual IPatch::pointer create_patch(edb::address_t address, const void *orgBuf,const void *buf, std::size_t len) const;
 public:
     virtual QMenu *menu(QWidget *parent = 0);
 

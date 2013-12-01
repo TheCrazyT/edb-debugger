@@ -101,10 +101,10 @@ void DebuggerCoreBase::remove_breakpoint(edb::address_t address) {
 // Desc: stores a patch
 // Note:
 //------------------------------------------------------------------------------
-void DebuggerCoreBase::create_patch(edb::address_t address, const void *buf, std::size_t len){
+void DebuggerCoreBase::create_patch(edb::address_t address, const void *orgBuf,const void *buf, std::size_t len){
     if(edb::v1::patches()!=NULL){
-        IPatch::pointer patch(edb::v1::patches()->create_patch(address,buf,len));
-        patches_[address] = patch;
+        IPatch::pointer patch(edb::v1::patches()->create_patch(address,orgBuf,buf,len));
+        patches_[patch->getAddress()] = patch;
     }
 }
 
@@ -126,7 +126,7 @@ IDebuggerCore::PatchList DebuggerCoreBase::get_code_patches(IRegion::pointer add
     PatchList result = PatchList();
 
     Q_FOREACH(const IPatch::pointer &patch, patches_) {
-        if(patch->getRegion() == address){
+        if((patch->getAddress() >= address->start())&&(patch->getAddress() >= address->end())){
             result[patch->getAddress()] = patch;
         }
     }

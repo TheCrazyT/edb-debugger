@@ -699,7 +699,7 @@ bool QDisassemblyView::isAddressPatched(edb::address_t address){
 
     Q_FOREACH(const IPatch::pointer &patch, patches) {
         if((patch->getAddress() <= address) && (patch->getAddress() + patch->getSize() > address)){
-            return true;
+            return patch->isActive();
         }
     }
     return false;

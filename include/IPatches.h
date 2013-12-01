@@ -6,6 +6,6 @@
 
 EDB_EXPORT class IPatches {
 public:
-   EDB_EXPORT virtual IPatch::pointer create_patch(edb::address_t address, const void *buf, std::size_t len) const = 0;
+   EDB_EXPORT virtual IPatch::pointer create_patch(edb::address_t address, const void *orgBuf, const void *buf, std::size_t len) const = 0;
 };
 #endif // IPATCHES_H

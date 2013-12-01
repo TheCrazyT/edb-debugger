@@ -2,6 +2,7 @@
 #define DIALOGPATCHES_H
 
 #include <QDialog>
+#include <QTableWidgetItem>
 
 namespace Ui {
 class DialogPatches;
@@ -15,6 +16,17 @@ public:
     explicit DialogPatches(QWidget *parent = 0);
     ~DialogPatches();
     
+private slots:
+
+    void updateList();
+
+    void on_tableWidget_itemDoubleClicked(QTableWidgetItem *item);
+
+    void on_tableWidget_customContextMenuRequested(const QPoint &pos);
+
+private:
+    virtual void showEvent(QShowEvent *event);
+
 private:
     Ui::DialogPatches *ui;
 };
