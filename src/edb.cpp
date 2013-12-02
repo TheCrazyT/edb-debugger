@@ -1017,9 +1017,12 @@ void modify_bytes(address_t address, unsigned int size, QByteArray &bytes, quint
 		}
 
         if(storePatch){
-            quint8 *orgBytes=new quint8[size];
-            debugger_core->read_bytes(address,orgBytes,size);
-            debugger_core->create_patch(address,orgBytes,bytes.data(), size);
+            quint8 *orgBytes = new quint8[size];
+
+            if(debugger_core->read_bytes(address,orgBytes,size)){
+                QByteArray newBytes = QByteArray(bytes);
+                debugger_core->create_patch(address,orgBytes,newBytes.data(), size);
+            }
         }
         debugger_core->write_bytes(address, bytes.data(), size);
 

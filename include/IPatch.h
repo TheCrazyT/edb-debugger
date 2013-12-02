@@ -17,7 +17,7 @@ public:
     virtual bool isActive() const = 0;
     virtual edb::address_t getAddress() const = 0;
     virtual const void *  getBytes() const = 0;
-    virtual std::size_t getSize() const = 0;
+    virtual unsigned int getSize() const = 0;
 };
 
 #endif // IPATCH_H

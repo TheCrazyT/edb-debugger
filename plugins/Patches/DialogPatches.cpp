@@ -74,12 +74,10 @@ void DialogPatches::on_tableWidget_customContextMenuRequested(const QPoint &pos)
     if (selectedItem == disable)
     {
         patch.staticCast<Patch>()->disable();
-        edb::v1::debugger_ui->repaint();
     }
     if (selectedItem == enable)
     {
         patch.staticCast<Patch>()->enable();
-        edb::v1::debugger_ui->repaint();
     }
     updateList();
 }
