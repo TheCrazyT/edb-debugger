@@ -19,7 +19,8 @@ SUBDIRS += \
 	References \
 	SessionManager \
 	SymbolViewer \
-        Patches
+        Patches \
+        ObjectExtractor
 
 unix {
 	!macx {
