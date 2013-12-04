@@ -36,14 +36,6 @@
            <string>Value</string>
           </property>
          </column>
-         <item>
-          <property name="text">
-           <string>Root</string>
-          </property>
-          <property name="text">
-           <string>at address xyz</string>
-          </property>
-         </item>
         </widget>
        </item>
        <item row="1" column="0" rowspan="2" colspan="3">
@@ -98,7 +90,30 @@
           <item row="0" column="3">
            <widget class="QLineEdit" name="txtAddress">
             <property name="inputMask">
-             <string>nnnnnnn;_</string>
+             <string>nnnnnnnnnnnnnnnn;_</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="title">
+          <string>Refresh</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0">
+           <widget class="QCheckBox" name="chkRefresh">
+            <property name="text">
+             <string>Auto refresh</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="btnRefresh">
+            <property name="text">
+             <string>&amp;Refresh manually</string>
             </property>
            </widget>
           </item>
