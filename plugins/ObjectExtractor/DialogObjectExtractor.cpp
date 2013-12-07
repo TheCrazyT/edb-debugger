@@ -7,6 +7,7 @@
 #include <QPointer>
 #include <QTimer>
 #include <QTreeWidgetItem>
+#include <QSignalMapper>
 
 const int NULL_STRING = 0;
 const int STRING_WITH_LENGTH = 1;
@@ -34,24 +35,53 @@ DialogObjectExtractor::DialogObjectExtractor(QWidget *parent) :
     ui->setupUi(this);
 
     QStringList lst = QStringList();
+    typeList_ = QList<quint8>();
+    typeListStr_ = QStringList();
+    typeButtons_ = new QList<QPushButton*>();
     lst << "ROOT" << "address";
     QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidget,lst,-1);
     ui->treeWidget->addTopLevelItem(item);
 
-    ui->cbType->addItem(QString("NULL terminated String"),QVariant(NULL_STRING));
-    ui->cbType->addItem(QString("String with length"),QVariant(STRING_WITH_LENGTH));
-    ui->cbType->addItem(QString("int64"),QVariant(INT64));
-    ui->cbType->addItem(QString("int32"),QVariant(INT32));
-    ui->cbType->addItem(QString("int16"),QVariant(INT16));
-    ui->cbType->addItem(QString("int8"),QVariant(INT8));
-    ui->cbType->addItem(QString("uint64"),QVariant(UINT64));
-    ui->cbType->addItem(QString("uint32"),QVariant(UINT32));
-    ui->cbType->addItem(QString("uint16"),QVariant(UINT16));
-    ui->cbType->addItem(QString("uint8"),QVariant(UINT8));
-    ui->cbType->addItem(QString("custom"),QVariant(CUSTOM));
-    ui->cbType->addItem(QString("pointer"),QVariant(POINTER));
+    QLayout * grid = new QGridLayout();
+    typeListStr_ << "NULL terminated String";
+    typeListStr_ << "String with length";
+    typeListStr_ << "int64";
+    typeListStr_ << "int32";
+    typeListStr_ << "int16";
+    typeListStr_ << "int8";
+    typeListStr_ << "uint64";
+    typeListStr_ << "uint32";
+    typeListStr_ << "uint16";
+    typeListStr_ << "uint8";
+    typeListStr_ << "custom";
+    typeListStr_ << "pointer";
+    typeListStr_ << "Array";
 
-    ui->cbType->addItem(QString("Array"),QVariant(ARRAY));
+    typeList_ << NULL_STRING;
+    typeList_ << STRING_WITH_LENGTH;
+    typeList_ << INT64;
+    typeList_ << INT32;
+    typeList_ << INT16;
+    typeList_ << INT8;
+    typeList_ << UINT64;
+    typeList_ << UINT32;
+    typeList_ << UINT16;
+    typeList_ << UINT8;
+    typeList_ << CUSTOM;
+    typeList_ << POINTER;
+    typeList_ << ARRAY;
+
+    ui->grpCreateElementList->setLayout(grid);
+
+    QSignalMapper *signalMapper = new QSignalMapper(ui->grpCreateElementList);
+    quint8 i = 0;
+    Q_FOREACH(const QString &s,typeListStr_){
+        QPushButton* pb = new QPushButton(s,ui->grpCreateElementList);
+        *typeButtons_ << pb;
+        pb->connect(pb, SIGNAL(clicked()), signalMapper, SLOT(map()));
+        signalMapper->setMapping(pb,i++);
+        grid->addWidget(pb);
+    }
 
     typeSizes_->insert(NULL_STRING,0);
     typeSizes_->insert(STRING_WITH_LENGTH,0);
@@ -64,6 +94,9 @@ DialogObjectExtractor::DialogObjectExtractor(QWidget *parent) :
 
     typeSizes_->insert(ARRAY,0);
     typeSizes_->insert(DYNAMIC_ARRAY,0);
+
+    connect(signalMapper, SIGNAL(mapped(int)),
+            this, SLOT(create(int)));
 }
 
 DialogObjectExtractor::~DialogObjectExtractor()
@@ -71,14 +104,16 @@ DialogObjectExtractor::~DialogObjectExtractor()
     delete ui;
 }
 
+
+
 void DialogObjectExtractor::on_txtName_returnPressed()
 {
     QTreeWidgetItem* item = ui->treeWidget->topLevelItem(0);
     item->setText(0,ui->txtName->text());
+    ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),ui->txtName->text());
 }
 
-void DialogObjectExtractor::on_btnCreate_clicked()
-{
+void DialogObjectExtractor::create(int type){
     QList<QTreeWidgetItem*> sel = ui->treeWidget->selectedItems();
     QTreeWidgetItem* parent = NULL;
     if(sel.size()==0){
@@ -102,9 +137,6 @@ void DialogObjectExtractor::on_btnCreate_clicked()
     if(ok){
         QStringList lst;
         lst << txt << "";
-        int idx = ui->cbType->currentIndex();
-        QVariant v = ui->cbType->itemData(idx);
-        int type = v.value<int>();
 
         QTreeWidgetItem* item = new QTreeWidgetItem(parent,lst,type);
         parent->addChild(item);
@@ -151,8 +183,9 @@ void DialogObjectExtractor::refresh(QTreeWidgetItem* ti)
     edb::address_t addr = txt.toULongLong(&ok, 16);
 
     int size = 0;
-    for(int i=0;i < ti->childCount();i++){
+    for(int i = 0;i < ti->childCount();i++){
         refresh(ti->child(i));
+        size += getTypeSize(addr+size,ti->child(i)->type());
     }
 
     if(size==0){
@@ -167,6 +200,10 @@ void DialogObjectExtractor::refresh(QTreeWidgetItem* ti)
             buf += typeSizes_->find(ti->child(i)->type()).value();
         }
     }
+}
+
+quint64 DialogObjectExtractor::getTypeSize(edb::address_t addr,int type){
+    return typeSizes_->find(type).value();
 }
 
 QString DialogObjectExtractor::parseToString(void * buf,int type){
@@ -214,6 +251,36 @@ void DialogObjectExtractor::refresh()
 {
     QTreeWidgetItem* ti = ui->treeWidget->topLevelItem(0);
     refresh(ti);
+
+    bool ok = false;
+    QString txt = ti->text(1);
+    edb::address_t addr = txt.toULongLong(&ok, 16);
+    if(ok && addr!=0){
+        refreshTypeButtons(addr);
+    }
+
+}
+
+void DialogObjectExtractor::refreshTypeButtons(edb::address_t addr){
+    uint size = 128;
+    quint8* buf = new quint8[size];
+
+    QTreeWidgetItem* ti = ui->treeWidget->topLevelItem(0);
+
+    uint structSize = 0;
+    for(int i = 0;i < ti->childCount();i++){
+        refresh(ti->child(i));
+        structSize += getTypeSize(addr+structSize,ti->child(i)->type());
+    }
+
+    edb::v1::debugger_core->read_bytes(addr+structSize,buf,size);
+
+    QString value = QString();
+    for(quint8 x=0;x<typeButtons_->size();x++){
+        QPushButton* pb = typeButtons_->at(x);
+        value = parseToString(buf,typeList_.at(x));
+        pb->setText(typeListStr_.at(x) + "[" + value + "]");
+    }
 }
 
 void DialogObjectExtractor::on_btnRefresh_clicked()
@@ -223,4 +290,7 @@ void DialogObjectExtractor::on_btnRefresh_clicked()
 void DialogObjectExtractor::timerTimeout()
 {
     refresh();
+}
+void DialogObjectExtractor::newObjVar(edb::address_t addr){
+    ui->txtAddress->setText(QString().number(addr));
 }

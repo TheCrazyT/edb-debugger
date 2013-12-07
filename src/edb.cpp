@@ -1220,7 +1220,7 @@ QString format_pointer(address_t p) {
 // Desc:
 //------------------------------------------------------------------------------
 address_t current_data_view_address() {
-	return qobject_cast<QHexView *>(ui()->ui.tabWidget->currentWidget())->firstVisibleAddress();
+    return qobject_cast<QHexView *>(ui()->ui.tabWidget->currentWidget())->firstVisibleAddress();
 }
 
 //------------------------------------------------------------------------------
@@ -1288,6 +1288,10 @@ QVector<quint8> read_pages(address_t address, size_t page_count) {
 	}
 	
 	return QVector<quint8>();
+}
+
+address_t get_selected_data_address(){
+    return qobject_cast<QHexView *>(ui()->ui.tabWidget->currentWidget())->selectedBytesAddress();
 }
 
 }

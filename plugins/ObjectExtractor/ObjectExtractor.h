@@ -2,7 +2,7 @@
 #define OBJECTEXTRACTOR_H
 
 #include "IPlugin.h"
-
+#include "edb.h"
 
 class QMenu;
 class QDialog;
@@ -24,15 +24,17 @@ public:
     ObjectExtractor();
 
 public:
-    virtual QMenu *menu(QWidget *parent = 0);
+    virtual QMenu* menu(QWidget *parent = 0);
+    virtual QList<QAction *> data_context_menu();
 
 public Q_SLOTS:
     void show_menu();
+    void show_menu(edb::address_t addr);
     void show_dialog();
 
 private:
-    QDialog *dialog_;
-    QMenu * menu_;
+    QDialog* dialog_;
+    QMenu* menu_;
 
 signals:
 
