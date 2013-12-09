@@ -15,10 +15,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#include "IPluginSession.h"
 #include "SessionManager.h"
 #include "edb.h"
+#include "SessionObject.h"
 #include <QtDebug>
+#include <QFile>
+#include <QDataStream>
+
 
 //------------------------------------------------------------------------------
 // Name: private_init
@@ -34,14 +38,20 @@ void SessionManager::private_init() {
 //------------------------------------------------------------------------------
 void SessionManager::save_session(const QString &filename, const QString &executable) {
 	qDebug() << "[SessionManager] saving session file:" << filename <<  "for:" << executable;
-	
+
+    QFile file(filename);
+    file.open(QIODevice::WriteOnly);
+    QDataStream stream(&file);
 	QHash<QString, QObject *> plugins = edb::v1::plugin_list();
 	for(QHash<QString, QObject *>::iterator it = plugins.begin(); it != plugins.end(); ++it) {
 		QObject *const o = it.value();
-		if(IPlugin *const p = qobject_cast<IPlugin *>(o)) {
-			//qDebug() << edb::v1::serialize_object(o);
-		}
+        if(IPluginSession* p = qobject_cast<IPluginSession *>(o)) {
+            if(p != 0){
+                p->serializeSessionObject(&stream);
+            }
+        }
 	}
+    file.close();
 }
 
 //------------------------------------------------------------------------------
@@ -51,12 +61,29 @@ void SessionManager::save_session(const QString &filename, const QString &execut
 void SessionManager::load_session(const QString &filename, const QString &executable) {
 	qDebug() << "[SessionManager] loading session file:" << filename <<  "for:" << executable;
 	
-	QHash<QString, QObject *> plugins = edb::v1::plugin_list();
-	for(QHash<QString, QObject *>::iterator it = plugins.begin(); it != plugins.end(); ++it) {
-		if(IPlugin *const p = qobject_cast<IPlugin *>(it.value())) {
+    QFile file(filename);
+    if(!file.exists()){
+        return;
+    }
+    file.open(QIODevice::ReadOnly);
+    QDataStream stream(&file);
+    QHash<QString, QObject *> plugins = edb::v1::plugin_list();
+    SessionObject* sessObj = new SessionObject();
 
-		}
-	}
+    while (!file.atEnd()) {
+        qint64 pos = stream.device()->pos();
+        *sessObj << stream;
+        for(QHash<QString, QObject *>::iterator it = plugins.begin(); it != plugins.end(); ++it) {
+            IPluginSession* const p = qobject_cast<IPluginSession *>(it.value());
+            if(p != 0) {
+                    if(p->getSessionIdentifier()->compare(sessObj->getIdentifier())==0) {
+                        stream.device()->seek(pos);
+                        p->deserializeSessionObject(&stream);
+                    }
+            }
+        }
+    }
+    file.close();
 }
 
 //------------------------------------------------------------------------------

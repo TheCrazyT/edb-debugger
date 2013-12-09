@@ -20,13 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BREAKPOINTMANAGER_20060430_H_
 
 #include "IPlugin.h"
+#include "IPluginSession.h"
+#include "SessionObject.h"
+#include "IDebuggerCore.h"
 
 class QMenu;
 class QDialog;
 
-class BreakpointManager : public QObject, public IPlugin {
+class BreakpointManager : public QObject,public IPlugin,public IPluginSession {
 	Q_OBJECT
-	Q_INTERFACES(IPlugin)
+    Q_INTERFACES(IPlugin)
+    Q_INTERFACES(IPluginSession)
 #if QT_VERSION >= 0x050000
 	Q_PLUGIN_METADATA(IID "edb.IPlugin/1.0")
 #endif
@@ -36,9 +40,12 @@ class BreakpointManager : public QObject, public IPlugin {
 public:
 	BreakpointManager();
 	virtual ~BreakpointManager();
+    QString* getSessionIdentifier() const;
 
 public:
 	virtual QMenu *menu(QWidget *parent = 0);
+    virtual void serializeSessionObject(QDataStream* stream) const;
+    virtual void deserializeSessionObject(QDataStream* stream) const;
 
 public Q_SLOTS:
 	void show_menu();

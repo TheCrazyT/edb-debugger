@@ -19,8 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BreakpointManager.h"
 #include "DialogBreakpoints.h"
 #include "edb.h"
+#include "IDebuggerCore.h"
+#include "SessionObjectWriter.h"
 #include <QMenu>
 #include <QKeySequence>
+
+
+const char* IDENTIFIER = "BreakpointManager";
 
 //------------------------------------------------------------------------------
 // Name: BreakpointManager
@@ -65,6 +70,29 @@ void BreakpointManager::show_menu() {
 
 	dialog_->show();
 }
+
+void BreakpointManager::serializeSessionObject(QDataStream* stream) const{
+    IDebuggerCore::BreakpointList bpl = edb::v1::debugger_core->backup_breakpoints();
+    SessionObjectWriter<AddrList>(getSessionIdentifier(),bpl.keys()) >> *stream;
+}
+
+void BreakpointManager::deserializeSessionObject(QDataStream* stream) const{
+    SessionObjectWriter<AddrList>* obj = new SessionObjectWriter<AddrList>(getSessionIdentifier(),AddrList());
+    *obj << *stream;
+
+    edb::v1::debugger_core->clear_breakpoints();
+
+    Q_FOREACH(edb::address_t addr,obj->getObjects()){
+        edb::v1::debugger_core->add_breakpoint(addr);
+    }
+}
+
+
+QString* BreakpointManager::getSessionIdentifier() const{
+    QString* result = new QString(IDENTIFIER);
+    return result;
+}
+
 
 #if QT_VERSION < 0x050000
 Q_EXPORT_PLUGIN2(BreakpointManager, BreakpointManager)

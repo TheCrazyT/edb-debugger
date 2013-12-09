@@ -2,6 +2,6 @@
 include(../plugins.pri)
 
 # Input
-HEADERS += BreakpointManager.h DialogBreakpoints.h
+HEADERS += SessionObjectWriter.h BreakpointManager.h DialogBreakpoints.h
 FORMS += dialogbreakpoints.ui
-SOURCES += BreakpointManager.cpp DialogBreakpoints.cpp
+SOURCES += SessionObjectWriter.cpp BreakpointManager.cpp DialogBreakpoints.cpp

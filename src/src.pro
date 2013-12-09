@@ -83,8 +83,9 @@ HEADERS += \
 	Util.h \
 	edb.h \
 	string_hash.h \
-	version.h
-
+        version.h \
+        IPluginSession.h \
+        SessionObject.h
 
 FORMS += \
 	BinaryString.ui \
@@ -134,7 +135,8 @@ SOURCES += \
 	TabWidget.cpp \
 	edb.cpp \
 	instruction.cpp \
-	main.cpp
+	main.cpp \
+        SessionObject.cpp
 
 # QHexView stuff
 INCLUDEPATH += qhexview
