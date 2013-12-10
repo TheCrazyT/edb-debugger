@@ -85,7 +85,8 @@ HEADERS += \
 	string_hash.h \
         version.h \
         IPluginSession.h \
-        SessionObject.h
+        SessionObject.h \
+        SessionObjectWriter.h
 
 FORMS += \
 	BinaryString.ui \
@@ -136,7 +137,8 @@ SOURCES += \
 	edb.cpp \
 	instruction.cpp \
 	main.cpp \
-        SessionObject.cpp
+        SessionObject.cpp \
+        SessionObjectWriter.cpp
 
 # QHexView stuff
 INCLUDEPATH += qhexview

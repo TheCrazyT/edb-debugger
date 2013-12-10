@@ -3,6 +3,7 @@ src/QHexView
 src/edisassm
 src/qhexview.cpp
 src/qhexview.h
+sessions
 .release-shared
 .debug-shared
 symbols
