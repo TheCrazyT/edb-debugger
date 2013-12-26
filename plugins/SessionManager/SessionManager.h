@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SESSIONMANAGER_20090212_H_
 #define SESSIONMANAGER_20090212_H_
 
+#include "MemoryRegions.h"
 #include "IPlugin.h"
 #include "ISessionFile.h"
 
@@ -39,9 +40,12 @@ public:
 public:
 	virtual void save_session(const QString &filename, const QString &executable);
 	virtual void load_session(const QString &filename, const QString &executable);
+    virtual quint64 updateAddress(quint64 addr);
 
 public:
 	virtual QMenu *menu(QWidget *parent = 0);
+private:
+    MemoryRegions storedRegions_;
 };
 
 #endif

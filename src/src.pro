@@ -86,7 +86,8 @@ HEADERS += \
         version.h \
         IPluginSession.h \
         SessionObject.h \
-        SessionObjectWriter.h
+        SessionObjectWriter.h \
+    BasicRegion.h
 
 FORMS += \
 	BinaryString.ui \
@@ -138,7 +139,8 @@ SOURCES += \
 	instruction.cpp \
 	main.cpp \
         SessionObject.cpp \
-        SessionObjectWriter.cpp
+        SessionObjectWriter.cpp \
+    BasicRegion.cpp
 
 # QHexView stuff
 INCLUDEPATH += qhexview

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "IDebuggerCore.h"
 #include "ISymbolManager.h"
 #include "MemoryRegions.h"
+#include "BasicRegion.h"
 #include "edb.h"
 
 #include <QDebug>
@@ -179,3 +180,42 @@ QVariant MemoryRegions::headerData(int section, Qt::Orientation orientation, int
 	return QVariant();
 }
 
+QDataStream& MemoryRegions::operator<<(QDataStream& ds) {
+    QList<BasicRegion::pointer> regions = QList<BasicRegion::pointer>();
+    int count;
+    ds >> count;
+    for(int i=0;i<count;i++){
+        BasicRegion* region = new BasicRegion();
+        QString name;
+        ds >> name;
+        region->set_name(name);
+        edb::address_t start;
+        ds >> start;
+        region->set_start(start);
+        edb::address_t end;
+        ds >> end;
+        region->set_end(end);
+        edb::address_t base;
+        ds >> base;
+        region->set_base(base);
+        regions.append(QSharedPointer<BasicRegion>(region));
+    }
+
+    regions_ = regions;
+
+}
+
+QDataStream& MemoryRegions::operator>>(QDataStream& ds) {
+    QList<IRegion::pointer> regions;
+
+    if(edb::v1::debugger_core) {
+        regions = edb::v1::debugger_core->memory_regions();
+        ds << regions.count();
+        Q_FOREACH(const IRegion::pointer &region, regions) {
+            ds << region->name();
+            ds << region->start();
+            ds << region->end();
+            ds << region->base();
+        }
+    }
+}

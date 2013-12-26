@@ -20,12 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DialogBreakpoints.h"
 #include "edb.h"
 #include "IDebuggerCore.h"
+#include "ISessionFile.h"
 #include "SessionObjectWriter.h"
 #include <QMenu>
 #include <QKeySequence>
 
-
-const char* IDENTIFIER = "BreakpointManager";
 
 //------------------------------------------------------------------------------
 // Name: BreakpointManager
@@ -82,14 +81,15 @@ void BreakpointManager::deserializeSessionObject(QDataStream* stream) const{
 
     edb::v1::debugger_core->clear_breakpoints();
 
-    Q_FOREACH(edb::address_t addr,obj->getObjects()){
-        edb::v1::debugger_core->add_breakpoint(addr);
+    Q_FOREACH(quint64 addr,obj->getObjects()){
+        ISessionFile *const session_file = edb::v1::session_file_handler();
+        edb::v1::debugger_core->add_breakpoint(session_file->updateAddress(addr));
     }
 }
 
 
 QString* BreakpointManager::getSessionIdentifier() const{
-    QString* result = new QString(IDENTIFIER);
+    QString* result = new QString("BreakpointManagerV1");
     return result;
 }
 

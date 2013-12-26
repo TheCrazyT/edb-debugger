@@ -57,6 +57,9 @@ void DialogPatches::on_tableWidget_customContextMenuRequested(const QPoint &pos)
 {
     QPoint globalPos = ui->tableWidget->mapToGlobal(pos);
 
+    if(ui->tableWidget->selectedItems().size()==0){
+        return;
+    }
     QMenu myMenu;
 
 

@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef ISESSION_FILE_20090212_H_
 #define ISESSION_FILE_20090212_H_
 
+#include "qglobal.h"
+
 class QString;
 
 class ISessionFile {
@@ -28,6 +30,7 @@ public:
 public:
 	virtual void save_session(const QString &filename, const QString &executable) = 0;
 	virtual void load_session(const QString &filename, const QString &executable) = 0;
+    virtual quint64 updateAddress(quint64 addr) = 0;
 };
 
 #endif

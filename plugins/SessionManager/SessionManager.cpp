@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SessionManager.h"
 #include "edb.h"
 #include "SessionObject.h"
+#include "IRegion.h"
 #include <QtDebug>
 #include <QFile>
 #include <QDataStream>
@@ -41,8 +42,10 @@ void SessionManager::save_session(const QString &filename, const QString &execut
 
     QFile file(filename);
     file.open(QIODevice::WriteOnly);
+
     QDataStream stream(&file);
-	QHash<QString, QObject *> plugins = edb::v1::plugin_list();
+    edb::v1::memory_regions() >> stream;
+    QHash<QString, QObject *> plugins = edb::v1::plugin_list();
 	for(QHash<QString, QObject *>::iterator it = plugins.begin(); it != plugins.end(); ++it) {
 		QObject *const o = it.value();
         if(IPluginSession* p = qobject_cast<IPluginSession *>(o)) {
@@ -51,6 +54,7 @@ void SessionManager::save_session(const QString &filename, const QString &execut
             }
         }
 	}
+
     file.close();
 }
 
@@ -62,11 +66,13 @@ void SessionManager::load_session(const QString &filename, const QString &execut
 	qDebug() << "[SessionManager] loading session file:" << filename <<  "for:" << executable;
 	
     QFile file(filename);
+
     if(!file.exists()){
         return;
     }
     file.open(QIODevice::ReadOnly);
     QDataStream stream(&file);
+    storedRegions_ << stream;
     QHash<QString, QObject *> plugins = edb::v1::plugin_list();
     SessionObject* sessObj = new SessionObject();
 
@@ -76,7 +82,7 @@ void SessionManager::load_session(const QString &filename, const QString &execut
         for(QHash<QString, QObject *>::iterator it = plugins.begin(); it != plugins.end(); ++it) {
             IPluginSession* const p = qobject_cast<IPluginSession *>(it.value());
             if(p != 0) {
-                    if(p->getSessionIdentifier()->compare(sessObj->getIdentifier())==0) {
+                    if(p->getSessionIdentifier()->compare(sessObj->getIdentifier()) == 0) {
                         stream.device()->seek(pos);
                         p->deserializeSessionObject(&stream);
                     }
@@ -93,6 +99,24 @@ void SessionManager::load_session(const QString &filename, const QString &execut
 QMenu *SessionManager::menu(QWidget *parent) {
 	Q_UNUSED(parent);
 	return 0;
+}
+
+//------------------------------------------------------------------------------
+// Name: updateAddress
+// Desc:
+//------------------------------------------------------------------------------
+quint64 SessionManager::updateAddress(quint64 addr) {
+    IRegion::pointer region = storedRegions_.find_region(addr);
+    if(region != NULL){
+        addr = addr - region->start();
+        Q_FOREACH(const IRegion::pointer &r, edb::v1::memory_regions().regions()) {
+            if(r->name().compare(region->name()) == 0){
+                addr = addr + region->start();
+                return addr;
+            }
+        }
+    }
+    return addr;
 }
 
 #if QT_VERSION < 0x050000
