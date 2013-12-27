@@ -695,9 +695,9 @@ void QDisassemblyView::draw_function_markers(QPainter &painter, edb::address_t a
 }
 
 bool QDisassemblyView::isAddressPatched(edb::address_t address){
-    IDebuggerCore::PatchList patches = edb::v1::debugger_core->get_code_patches();
+    IDebuggerCore::PatchList* patches = edb::v1::debugger_core->get_code_patches();
 
-    Q_FOREACH(const IPatch::pointer &patch, patches) {
+    Q_FOREACH(const IPatch::pointer &patch, *patches) {
         if((patch->getAddress() <= address) && (patch->getAddress() + patch->getSize() > address)){
             return patch->isActive();
         }

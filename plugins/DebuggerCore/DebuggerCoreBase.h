@@ -37,7 +37,7 @@ public:
 	virtual bool open(const QString &path, const QString &cwd, const QList<QByteArray> &args, const QString &tty) = 0;
 
 public:
-	virtual BreakpointList backup_breakpoints() const;
+    virtual BreakpointList backup_breakpoints() const;
 	virtual IBreakpoint::pointer add_breakpoint(edb::address_t address);
 	virtual IBreakpoint::pointer find_breakpoint(edb::address_t address);
 	virtual int breakpoint_size() const;
@@ -45,8 +45,8 @@ public:
 	virtual void remove_breakpoint(edb::address_t address);
 
 public:
-    virtual PatchList get_code_patches();
-    virtual PatchList get_code_patches(IRegion::pointer address);
+    virtual PatchList* get_code_patches();
+    virtual PatchList* get_code_patches(IRegion::pointer address);
     virtual void clear_patches();
     virtual void create_patch(edb::address_t address, const void *orgBuf,const void *buf, std::size_t len);
 

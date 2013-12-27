@@ -113,8 +113,8 @@ public:
 
 public:
     // get modified code in memory segment
-    virtual PatchList get_code_patches(IRegion::pointer address) = 0;
-    virtual PatchList get_code_patches() = 0;
+    virtual PatchList* get_code_patches(IRegion::pointer address) = 0;
+    virtual PatchList* get_code_patches() = 0;
 
 public:
 	virtual QString format_pointer(edb::address_t address) const = 0;

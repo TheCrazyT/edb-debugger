@@ -113,8 +113,8 @@ void DebuggerCoreBase::create_patch(edb::address_t address, const void *orgBuf,c
 // Desc: gets patched areas of code
 // Note:
 //------------------------------------------------------------------------------
-IDebuggerCore::PatchList DebuggerCoreBase::get_code_patches(){
-    return patches_;
+IDebuggerCore::PatchList* DebuggerCoreBase::get_code_patches(){
+    return &patches_;
 }
 
 //------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ IDebuggerCore::PatchList DebuggerCoreBase::get_code_patches(){
 // Desc: gets patched areas of code
 // Note:
 //------------------------------------------------------------------------------
-IDebuggerCore::PatchList DebuggerCoreBase::get_code_patches(IRegion::pointer address){
+IDebuggerCore::PatchList* DebuggerCoreBase::get_code_patches(IRegion::pointer address){
     PatchList result = PatchList();
 
     Q_FOREACH(const IPatch::pointer &patch, patches_) {
@@ -131,7 +131,7 @@ IDebuggerCore::PatchList DebuggerCoreBase::get_code_patches(IRegion::pointer add
         }
     }
 
-    return result;
+    return &result;
 }
 
 //------------------------------------------------------------------------------

@@ -5,7 +5,7 @@
 class Patch : public IPatch
 {
 public:
-    Patch(bool active,edb::address_t address,const void * orgBytes,const void * bytes,unsigned int len);
+    Patch(bool active,edb::address_t address,void * orgBytes,void * bytes,unsigned int len);
     ~Patch();
 
     bool isActive() const;
@@ -20,8 +20,8 @@ public:
 private:
     bool active_;
     edb::address_t address_;
-    const void * bytes_;
-    const void * origBytes_;
+    quint8 * bytes_;
+    quint8 * origBytes_;
     unsigned int len_;
 };
 

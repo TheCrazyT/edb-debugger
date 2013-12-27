@@ -24,6 +24,8 @@ private slots:
 
     void on_tableWidget_customContextMenuRequested(const QPoint &pos);
 
+    void on_pushButton_clicked();
+
 private:
     virtual void showEvent(QShowEvent *event);
 

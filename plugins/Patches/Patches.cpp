@@ -2,6 +2,7 @@
 #include "Patch.h"
 #include "DialogPatches.h"
 #include "IDebuggerCore.h"
+#include "ISessionFile.h"
 #include "SessionObjectWriter.h"
 #include "edb.h"
 #include <QMenu>
@@ -35,8 +36,10 @@ QMenu *Patches::menu(QWidget *parent) {
     Q_ASSERT(parent);
 
     if(!menu_) {
-        menu_ = new QMenu(tr("Patches"), parent);
-        menu_->addAction (tr("&Patches"), this, SLOT(show_menu()), QKeySequence(tr("Ctrl+P")));
+        if(edb::v1::debugger_core) {
+            menu_ = new QMenu(tr("Patches"), parent);
+            menu_->addAction (tr("&Patches"), this, SLOT(show_menu()), QKeySequence(tr("Ctrl+P")));
+        }
     }
 
     return menu_;
@@ -47,10 +50,10 @@ QMenu *Patches::menu(QWidget *parent) {
 // Name: createPatch
 // Desc:
 //------------------------------------------------------------------------------
-IPatch::pointer Patches::create_patch(edb::address_t address,const void *orgBuf, const void *buf, std::size_t len) const{
-    IDebuggerCore::PatchList patches = edb::v1::debugger_core->get_code_patches();
+IPatch::pointer Patches::create_patch(edb::address_t address,void *orgBuf, void *buf, std::size_t len) const{
+    IDebuggerCore::PatchList* patches = edb::v1::debugger_core->get_code_patches();
 
-    Q_FOREACH(const IPatch::pointer &p, patches) {
+    Q_FOREACH(const IPatch::pointer &p, *patches) {
         QSharedPointer<Patch> patch = p.staticCast<Patch>();
 
         if((address>=patch->getAddress())&&(address<patch->getAddress()+patch->getSize())){
@@ -73,7 +76,7 @@ IPatch::pointer Patches::create_patch(edb::address_t address,const void *orgBuf,
                 newPatchBuf++;
             }
 
-            patches.remove(patch->getAddress());
+            patches->remove(patch->getAddress());
 
             return IPatch::pointer(patch);
         }
@@ -88,14 +91,14 @@ QString* Patches::getSessionIdentifier() const{
 }
 
 void Patches::serializeSessionObject(QDataStream* stream) const{
-    IDebuggerCore::PatchList patches = edb::v1::debugger_core->get_code_patches();
+    IDebuggerCore::PatchList* patches = edb::v1::debugger_core->get_code_patches();
     //SessionObjectWriter<IDebuggerCore::PatchList>(getSessionIdentifier(),patches) >> *stream;
     QVarList list = QList<QVariant>();
-    list.append(QVariant(patches.keys().size()));
-    Q_FOREACH(edb::address_t addr,patches.keys()){
+    list.append(QVariant(patches->keys().size()));
+    Q_FOREACH(edb::address_t addr,patches->keys()){
         list.append(QVariant(addr));
     }
-    Q_FOREACH(IPatch::pointer patchPointer,patches.values()){
+    Q_FOREACH(IPatch::pointer patchPointer,patches->values()){
         Patch* patch = (Patch*)patchPointer.data();
         int size= patch->getSize();
         typedef const char BytesBuf[size];
@@ -111,12 +114,12 @@ void Patches::serializeSessionObject(QDataStream* stream) const{
 
 }
 void Patches::deserializeSessionObject(QDataStream* stream) const{
-    IDebuggerCore::PatchList patches = edb::v1::debugger_core->get_code_patches();
+    IDebuggerCore::PatchList* patches = edb::v1::debugger_core->get_code_patches();
 
     SessionObjectWriter<QVarList>* obj = new SessionObjectWriter<QVarList>(getSessionIdentifier(),QVarList());
     *obj << *stream;
 
-    patches.clear();
+    patches->clear();
 
     QList<edb::address_t> addresses = QList<edb::address_t>();
     if(obj->getObjects().size()>0){
@@ -126,15 +129,19 @@ void Patches::deserializeSessionObject(QDataStream* stream) const{
             addresses.append(addr);
         }
         int x=0;
+        ISessionFile *const session_file = edb::v1::session_file_handler();
         for(int i=size;i<size*4;i+=3){
             QVariant v = obj->getObjects().at(i+1);
             int size = v.value<int>();
             QByteArray origBytes = obj->getObjects().at(i+2).value<QByteArray>();
             QByteArray bytes = obj->getObjects().at(i+3).value<QByteArray>();
-            edb::v1::debugger_core->create_patch(addresses.at(x),origBytes.data(),bytes.data(),size);
+            edb::v1::debugger_core->create_patch(session_file->updateAddress(addresses.at(x)),origBytes.data(),bytes.data(),size);
             x++;
         }
-
+        IDebuggerCore::PatchList* patches = edb::v1::debugger_core->get_code_patches();
+        Q_FOREACH(const IPatch::pointer &patch, *patches) {
+            patch.staticCast<Patch>()->disable();
+        }
     }
 }
 
