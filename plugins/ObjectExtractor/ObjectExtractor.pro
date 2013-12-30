@@ -2,7 +2,8 @@ include(../plugins.pri)
 
 HEADERS += \
     DialogObjectExtractor.h \
-    ObjectExtractor.h
+    ObjectExtractor.h \
+    constants.h
 
 SOURCES += \
     DialogObjectExtractor.cpp \

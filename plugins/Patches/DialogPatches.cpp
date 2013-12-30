@@ -12,6 +12,7 @@
 #include "elf_binary.h"
 #include <QFile>
 #include <QDebug>
+#include <QMessageBox>
 #include <QtGui/QFileDialog>
 
 DialogPatches::DialogPatches(QWidget *parent) :
@@ -104,6 +105,7 @@ void DialogPatches::on_tableWidget_customContextMenuRequested(const QPoint &pos)
 
 void DialogPatches::on_pushButton_clicked()
 {
+    bool patched = false;
     if(edb::v1::debugger_core) {
         if(const edb::pid_t pid = edb::v1::debugger_core->pid()) {
             const QString exe            = edb::v1::debugger_core->process_exe(pid);
@@ -114,13 +116,13 @@ void DialogPatches::on_pushButton_clicked()
                     if(file.open(QIODevice::ReadOnly)) {
                         QByteArray byteArray = file.readAll();
                         void * data = byteArray.data();
-                        const plugin::binary_info::elf64_header *const header = (plugin::binary_info::elf64_header *)(data);
-                        if((std::memcmp(header->e_ident, ELFMAG, SELFMAG) == 0) && (header->e_ident[EI_CLASS] == ELFCLASS64)){
+                        const plugin::binary_info::elf64_header *const header64 = (plugin::binary_info::elf64_header *)(data);
+                        if((std::memcmp(header64->e_ident, ELFMAG, SELFMAG) == 0) && (header64->e_ident[EI_CLASS] == ELFCLASS64)){
                             QString patchName = QFileDialog::getSaveFileName(this, "Save patched file", "", "");
                             QFile patch(patchName);
                             IDebuggerCore::PatchList* patches = edb::v1::debugger_core->get_code_patches();
-                            plugin::binary_info::elf64_shdr* shdr = (plugin::binary_info::elf64_shdr *)(data + header->e_shoff);
-                            for(int i=0;i<header->e_shnum;i++) {
+                            plugin::binary_info::elf64_shdr* shdr = (plugin::binary_info::elf64_shdr *)(data + header64->e_shoff);
+                            for(int i=0;i<header64->e_shnum;i++) {
                                 Q_FOREACH(const IPatch::pointer &patch, *patches) {
                                     if((shdr->sh_addr!=0) && (patch->getAddress() > shdr->sh_addr) && (patch->getAddress() < shdr->sh_addr + shdr->sh_size)){
                                         quint64 offset = shdr->sh_offset + patch->getAddress() - shdr->sh_addr;
@@ -136,11 +138,42 @@ void DialogPatches::on_pushButton_clicked()
                             patch.open(QIODevice::WriteOnly);
                             patch.write((const char*)data,byteArray.count());
                             patch.close();
+                            patched = true;
+                        }
+                        const plugin::binary_info::elf32_header *const header32 = (plugin::binary_info::elf32_header *)(data);
+                        if((std::memcmp(header32->e_ident, ELFMAG, SELFMAG) == 0) && (header32->e_ident[EI_CLASS] == ELFCLASS64)){
+                            QString patchName = QFileDialog::getSaveFileName(this, "Save patched file", "", "");
+                            QFile patch(patchName);
+                            IDebuggerCore::PatchList* patches = edb::v1::debugger_core->get_code_patches();
+                            plugin::binary_info::elf32_shdr* shdr = (plugin::binary_info::elf32_shdr *)(data + header64->e_shoff);
+                            for(int i=0;i<header32->e_shnum;i++) {
+                                Q_FOREACH(const IPatch::pointer &patch, *patches) {
+                                    if((shdr->sh_addr!=0) && (patch->getAddress() > shdr->sh_addr) && (patch->getAddress() < shdr->sh_addr + shdr->sh_size)){
+                                        quint64 offset = shdr->sh_offset + patch->getAddress() - shdr->sh_addr;
+                                        qDebug("Section size: %x",shdr->sh_size);
+                                        qDebug("Section addr: %x",shdr->sh_addr);
+                                        qDebug("Section offset: %x",shdr->sh_offset);
+                                        qDebug("Patch offset: %x",offset);
+                                        memcpy(data + offset,patch->getBytes(),patch->getSize());
+                                    }
+                                }
+                                shdr++;
+                            }
+                            patch.open(QIODevice::WriteOnly);
+                            patch.write((const char*)data,byteArray.count());
+                            patch.close();
+                            patched = true;
                         }
                         file.close();
                     }
                 }
             }
         }
+    }
+    if(!patched){
+        QMessageBox::critical(this,
+                         QString("Error"),
+                         QString("unable to patch file"),
+                         QMessageBox::Ok);
     }
 }

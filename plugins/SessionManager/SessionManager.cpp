@@ -50,6 +50,7 @@ void SessionManager::save_session(const QString &filename, const QString &execut
 		QObject *const o = it.value();
         if(IPluginSession* p = qobject_cast<IPluginSession *>(o)) {
             if(p != 0){
+                qDebug() << "try to save session object for:" << *(p->getSessionIdentifier());
                 p->serializeSessionObject(&stream);
             }
         }
@@ -79,12 +80,17 @@ void SessionManager::load_session(const QString &filename, const QString &execut
     while (!file.atEnd()) {
         qint64 pos = stream.device()->pos();
         *sessObj << stream;
+        qDebug() << "try to load session object for:" << *(sessObj->getIdentifier());
         for(QHash<QString, QObject *>::iterator it = plugins.begin(); it != plugins.end(); ++it) {
+            if(file.atEnd()){
+                break;
+            }
             IPluginSession* const p = qobject_cast<IPluginSession *>(it.value());
             if(p != 0) {
                     if(p->getSessionIdentifier()->compare(sessObj->getIdentifier()) == 0) {
                         stream.device()->seek(pos);
                         p->deserializeSessionObject(&stream);
+                        break;
                     }
             }
         }

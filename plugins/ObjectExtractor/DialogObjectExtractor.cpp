@@ -3,29 +3,16 @@
 #include "qinputdialog.h"
 #include "edb.h"
 #include "IDebuggerCore.h"
+#include "constants.h"
 #include <QDebug>
 #include <QPointer>
+#include <QVariant>
+#include <QMap>
 #include <QTimer>
 #include <QTreeWidgetItem>
 #include <QSignalMapper>
 
-const int NULL_STRING = 0;
-const int STRING_WITH_LENGTH = 1;
-const int INT64 = 2;
-const int INT32 = 3;
-const int INT16 = 4;
-const int INT8 = 5;
-const int UINT64 = 6;
-const int UINT32 = 7;
-const int UINT16 = 8;
-const int UINT8 = 9;
 
-const int CUSTOM = 20;
-
-const int POINTER = 22;
-
-const int ARRAY = 1000;
-const int DYNAMIC_ARRAY = 2000;
 
 DialogObjectExtractor::DialogObjectExtractor(QWidget *parent) :
     QDialog(parent),
@@ -33,14 +20,9 @@ DialogObjectExtractor::DialogObjectExtractor(QWidget *parent) :
 {
     typeSizes_ = new QHash<int,int>();
     ui->setupUi(this);
-
-    QStringList lst = QStringList();
     typeList_ = QList<quint8>();
     typeListStr_ = QStringList();
     typeButtons_ = new QList<QPushButton*>();
-    lst << "ROOT" << "address";
-    QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidget,lst,-1);
-    ui->treeWidget->addTopLevelItem(item);
 
     QLayout * grid = new QGridLayout();
     typeListStr_ << "NULL terminated String";
@@ -95,12 +77,36 @@ DialogObjectExtractor::DialogObjectExtractor(QWidget *parent) :
     typeSizes_->insert(ARRAY,0);
     typeSizes_->insert(DYNAMIC_ARRAY,0);
 
+    cleanUp();
+
     connect(signalMapper, SIGNAL(mapped(int)),
             this, SLOT(create(int)));
 }
 
+
+//should be called on every new opened file
+void DialogObjectExtractor::cleanUp(bool skipRoot)
+{
+    ui->treeWidget->clear();
+    objectTree = new QHash<quint32,QHash<qint32,void*>*>();
+
+    if(!skipRoot){
+        QStringList lst = QStringList();
+        lst << "ROOT" << "address";
+        QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidget,lst,-1);
+        ui->treeWidget->addTopLevelItem(item);
+
+        QHash<qint32,void*>* subObjTree = new QHash<qint32,void*>();
+        subObjTree->insert(TREE_NAME,new QString("ROOT"));
+        subObjTree->insert(TREE_ADDRESS,new quint64(0));
+        subObjTree->insert(TREE_TYPE,new int(ROOT));
+        objectTree->insert(0,subObjTree);
+    }
+}
+
 DialogObjectExtractor::~DialogObjectExtractor()
 {
+    //delete &objectTree;
     delete ui;
 }
 
@@ -110,7 +116,61 @@ void DialogObjectExtractor::on_txtName_returnPressed()
 {
     QTreeWidgetItem* item = ui->treeWidget->topLevelItem(0);
     item->setText(0,ui->txtName->text());
+    QHash<qint32,void*>* subObjTree = objectTree->find(0).value();
+    QString str = ui->txtName->text();
+    subObjTree->insert(TREE_NAME,new QString(str));
     ui->tabWidget->setTabText(ui->tabWidget->currentIndex(),ui->txtName->text());
+    qDebug() << *objectTree;
+    qDebug() << *subObjTree;
+}
+
+QTreeWidgetItem* DialogObjectExtractor::create(int type,QString* txt,quint64 addr=0,QTreeWidgetItem* parent=NULL){
+    if(parent == NULL){
+        parent = ui->treeWidget->topLevelItem(0);
+    }
+
+    QStringList lst;
+    lst << *txt <<  QString::number(addr,16);
+    if(parent != NULL){
+        QHash<qint32,void*>* subObjTree = objectTree->find(0).value();
+        QList<quint32> indexes = QList<quint32>();
+        QTreeWidgetItem* treePath = parent;
+        while(treePath->type() != ROOT){
+            treePath = treePath->parent();
+            if(treePath->type() != ROOT){
+                indexes.append(0);
+            }else{
+                indexes.append(treePath->parent()->indexOfChild(treePath));
+            }
+        }
+        qDebug() << parent->text(0);
+        for(int i=indexes.count()-1;i>=0;i--){
+            subObjTree = &subObjTree[i];
+        }
+        if(type != ROOT){
+            quint8 newIdx = 0;
+            Q_FOREACH(qint32 key, subObjTree->keys()){
+                if(key > newIdx){
+                    newIdx = key + 1;
+                }
+            }
+
+            QHash<qint32,void*>* newSubObjTree = new QHash<qint32,void*>();
+            subObjTree->insert(newIdx,newSubObjTree);
+            subObjTree = newSubObjTree;
+        }
+        subObjTree->insert(TREE_TYPE,new quint8(type));
+        subObjTree->insert(TREE_NAME,new QString(*txt));
+        subObjTree->insert(TREE_ADDRESS,new quint64(addr));
+    }
+
+    QTreeWidgetItem* item = new QTreeWidgetItem(parent,lst,type);
+    if(parent == NULL){
+        ui->treeWidget->addTopLevelItem(item);
+    }else{
+        parent->addChild(item);
+    }
+    return item;
 }
 
 void DialogObjectExtractor::create(int type){
@@ -122,7 +182,7 @@ void DialogObjectExtractor::create(int type){
         parent = sel.at(0);
     }
 
-    if(parent==NULL){
+    if(parent == NULL){
         return;
     }
 
@@ -130,18 +190,12 @@ void DialogObjectExtractor::create(int type){
         parent = parent->parent();
     }
 
-    qDebug() << parent->text(0);
-
     bool ok = false;
     QString txt = QInputDialog::getText(this, tr("Enter Name"),tr("Name:"), QLineEdit::Normal,"", &ok);
-    if(ok){
-        QStringList lst;
-        lst << txt << "";
-
-        QTreeWidgetItem* item = new QTreeWidgetItem(parent,lst,type);
-        parent->addChild(item);
-        ui->treeWidget->repaint();
+    if(ok) {
+        create(type,&txt,0,parent);
     }
+    ui->treeWidget->repaint();
     refresh();
 }
 
@@ -149,10 +203,10 @@ void DialogObjectExtractor::on_btnDelete_clicked()
 {
     QTreeWidgetItem* tli = ui->treeWidget->topLevelItem(0);
     QList<QTreeWidgetItem*> sel = ui->treeWidget->selectedItems();
-    if(sel.size()==0){
+    if(sel.size() == 0){
         return;
     }
-    if(sel.at(0)==tli){
+    if(sel.at(0) == tli){
         return;
     }
     tli->removeChild(sel.at(0));
@@ -163,6 +217,11 @@ void DialogObjectExtractor::on_txtAddress_returnPressed()
 {
     QTreeWidgetItem* item = ui->treeWidget->topLevelItem(0);
     item->setText(1,ui->txtAddress->text());
+
+    QHash<qint32,void*>* subObjTree = objectTree->find(0).value();
+    bool ok = false;
+    edb::address_t addr = ui->txtAddress->text().toULongLong(&ok, 16);
+    subObjTree->insert(TREE_ADDRESS,new quint64(addr));
     refresh();
 }
 

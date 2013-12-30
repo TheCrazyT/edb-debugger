@@ -3,8 +3,9 @@
 
 #include "edb.h"
 #include <QDialog>
-class QString;
-class QTreeWidgetItem;
+#include <QString>
+#include <QHash>
+#include <QTreeWidgetItem>
 
 namespace Ui {
 class DialogObjectExtractor;
@@ -18,6 +19,8 @@ public:
     explicit DialogObjectExtractor(QWidget *parent = 0);
     ~DialogObjectExtractor();
     void newObjVar(edb::address_t addr);
+    void cleanUp(bool skipRoot=false);
+
 private slots:
     void create(int type);
     void on_txtName_returnPressed();
@@ -40,6 +43,10 @@ private:
     QList<quint8> typeList_;
     QList<QPushButton*>* typeButtons_;
     void refreshTypeButtons(edb::address_t addr);
+
+public:
+    QTreeWidgetItem* create(int type,QString* text,quint64 addr,QTreeWidgetItem* parent);
+    QHash<quint32,QHash<qint32,void*>*>* objectTree;
 };
 
 #endif // DIALOGOBJECTEXTRACTOR_H
