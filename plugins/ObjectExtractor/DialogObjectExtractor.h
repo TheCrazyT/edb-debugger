@@ -24,12 +24,13 @@ public:
 private slots:
     void create(int type);
     void on_txtName_returnPressed();
-    void on_btnCreate_clicked();
     void on_btnDelete_clicked();
     void on_txtAddress_returnPressed();
     void on_checkBox_stateChanged(int arg1);
 
     void on_btnRefresh_clicked();
+
+    void on_chkRefresh_stateChanged(int arg1);
 
 private:
     quint64 getTypeSize(edb::address_t addr,int type);

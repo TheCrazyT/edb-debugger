@@ -13,6 +13,7 @@ target.path = /bin/
 INSTALLS    += target
 QT          += xml xmlpatterns
 
+
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets
 	CONFIG += c++11
@@ -87,7 +88,8 @@ HEADERS += \
         IPluginSession.h \
         SessionObject.h \
         SessionObjectWriter.h \
-    BasicRegion.h
+    BasicRegion.h \
+    main.h
 
 FORMS += \
 	BinaryString.ui \
@@ -140,7 +142,8 @@ SOURCES += \
 	main.cpp \
         SessionObject.cpp \
         SessionObjectWriter.cpp \
-    BasicRegion.cpp
+    BasicRegion.cpp \
+    tests/TestApp.cpp
 
 # QHexView stuff
 INCLUDEPATH += qhexview
@@ -165,6 +168,7 @@ win32 {
 }
 
 unix {
+        message(Compiling Unix build)
 	graph {
 		VPATH       += graph
 		INCLUDEPATH += graph
@@ -228,3 +232,11 @@ unix {
 	openbsd-g++* : QMAKE_LFLAGS += -lkvm -Wl,--export-dynamic $$(LDFLAGS)
 }
 
+CONFIG(TEST){
+    message(Compiling Test build)
+    CONFIG  -= debug
+    CONFIG  += qtestlib
+    SOURCES += tests/Tests.cpp
+    TARGET   = tests
+    DEFINES += TEST_BUILD
+}

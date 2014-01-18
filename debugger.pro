@@ -8,3 +8,16 @@ plugins.depends = src
 lessThan(QT_VERSION, 4.5) {
 	error('edb requires Qt version 4.5 or greater')
 }
+
+CONFIG(TEST){
+    message(Test build)
+    CONFIG -= debug
+    DEFINES += TEST_BUILD
+    CONFIG += qtestlib
+}
+
+CONFIG(debug){
+    message(Debug build)
+    DEFINES -= TEST_BUILD
+}
+

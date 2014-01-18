@@ -5,11 +5,15 @@ src/qhexview.cpp
 src/qhexview.h
 .release-shared
 .debug-shared
+.test-shared
 symbols
 *.o
 *.user
 *.so
 *.*~
 edb
+edb.exe
+TestApp
+TestApp.exe
 .svn
 QHexViewDir

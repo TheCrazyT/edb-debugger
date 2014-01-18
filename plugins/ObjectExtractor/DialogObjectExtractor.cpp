@@ -225,16 +225,6 @@ void DialogObjectExtractor::on_txtAddress_returnPressed()
     refresh();
 }
 
-void DialogObjectExtractor::on_checkBox_stateChanged(int arg1)
-{
-    ui->btnRefresh->setEnabled(!ui->chkRefresh->checkState());
-
-    if(ui->chkRefresh->checkState()){
-        QTimer* timer = new QTimer(this);
-        timer->setInterval(1000);
-        connect(timer, SIGNAL(timeout()), this, SLOT(timerTimeout()));
-    }
-}
 void DialogObjectExtractor::refresh(QTreeWidgetItem* ti)
 {
     bool ok = false;
@@ -352,4 +342,15 @@ void DialogObjectExtractor::timerTimeout()
 }
 void DialogObjectExtractor::newObjVar(edb::address_t addr){
     ui->txtAddress->setText(QString().number(addr));
+}
+
+void DialogObjectExtractor::on_chkRefresh_stateChanged(int arg1)
+{
+    ui->btnRefresh->setEnabled(!ui->chkRefresh->checkState());
+
+    if(ui->chkRefresh->checkState()){
+        QTimer* timer = new QTimer(this);
+        timer->setInterval(1000);
+        connect(timer, SIGNAL(timeout()), this, SLOT(timerTimeout()));
+    }
 }

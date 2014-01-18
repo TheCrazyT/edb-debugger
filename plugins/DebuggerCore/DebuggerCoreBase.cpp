@@ -101,7 +101,7 @@ void DebuggerCoreBase::remove_breakpoint(edb::address_t address) {
 // Desc: stores a patch
 // Note:
 //------------------------------------------------------------------------------
-void DebuggerCoreBase::create_patch(edb::address_t address, const void *orgBuf,const void *buf, std::size_t len){
+void DebuggerCoreBase::create_patch(edb::address_t address, void *orgBuf, void *buf, std::size_t len){
     if(edb::v1::patches()!=NULL){
         IPatch::pointer patch(edb::v1::patches()->create_patch(address,orgBuf,buf,len));
         patches_[patch->getAddress()] = patch;

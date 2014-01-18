@@ -314,6 +314,7 @@ void Debugger::update_menu_state(GUI_STATE state) {
 // Desc: creates a TTY object for our command line I/O
 //------------------------------------------------------------------------------
 QString Debugger::create_tty() {
+#if !defined(TEST_BUILD)
 #if defined(Q_OS_LINUX) || defined(Q_OS_OPENBSD) || defined(Q_OS_FREEBSD)
 	// we attempt to reuse an open output window
 	if(edb::v1::config().tty_enabled && tty_proc_->state() != QProcess::Running) {
@@ -379,6 +380,7 @@ QString Debugger::create_tty() {
 			::unlink(qPrintable(temp_pipe));
 		}
 	}
+#endif
 #endif
 	return tty_file_;
 }

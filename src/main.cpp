@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "IPlugin.h"
 #include "edb.h"
 #include "version.h"
+#include "main.h"
 
 #include <QApplication>
 #include <QDir>
@@ -36,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctime>
 #include <iostream>
 
-namespace {
+namespace mainNsp{
 
 //------------------------------------------------------------------------------
 // Name: load_plugins
@@ -88,7 +89,11 @@ int start_debugger(edb::pid_t attach_pid, const QString &program, const QList<QB
 	Debugger debugger;
 
 	// ok things are initialized to a reasonable degree, let's show the main window
-	debugger.show();
+#if defined(TEST_BUILD)
+    debugger.showMinimized();
+#else
+    debugger.show();
+#endif
 
 	if(!edb::v1::debugger_core) {
 		QMessageBox::warning(
@@ -113,10 +118,14 @@ int start_debugger(edb::pid_t attach_pid, const QString &program, const QList<QB
 		if(attach_pid != 0) {
 			debugger.attach(attach_pid);
 		} else if(!program.isEmpty()) {
+            qDebug() << "Open program" << program;
 			debugger.execute(program, programArgs);
 		}
-
+#if !defined(TEST_BUILD)
 		return qApp->exec();
+#else
+        qDebug() << "Finished start_debugger";
+#endif
 	}
 }
 
@@ -163,15 +172,12 @@ void usage() {
 	
 	std::exit(-1);
 }
-	
-}
-
 
 //------------------------------------------------------------------------------
-// Name: main
+// Name: start
 // Desc: entry point
 //------------------------------------------------------------------------------
-int main(int argc, char *argv[]) {
+int start(int argc, char *argv[]) {
 
 	QT_REQUIRE_VERSION(argc, argv, "4.5.0");
 
@@ -185,12 +191,15 @@ int main(int argc, char *argv[]) {
 	QApplication::setOrganizationDomain("codef00.com");
 	QApplication::setApplicationName("edb");
 
-	load_translations();
+    mainNsp::load_translations();
 	
 	// look for some plugins..
-	load_plugins(edb::v1::config().plugin_path);
+    mainNsp::load_plugins(edb::v1::config().plugin_path);
 	
 	QStringList args = app.arguments();
+
+    qDebug() << "Program arguments:" << args;
+
 	edb::pid_t        attach_pid = 0;
 	QList<QByteArray> run_args;
 	QString           run_app;
@@ -203,7 +212,7 @@ int main(int argc, char *argv[]) {
 			const IPlugin::ArgumentStatus r = p->parse_argments(args);
 			switch(r) {
 			case IPlugin::ARG_ERROR:
-				usage();
+                mainNsp::usage();
 				break;
 			case IPlugin::ARG_EXIT:
 				std::exit(0);
@@ -230,9 +239,22 @@ int main(int argc, char *argv[]) {
 			std::cout << edb::version << std::endl;
 			return 0;
 		} else {
-			usage();
+            mainNsp::usage();
 		}
 	}
 
-	return start_debugger(attach_pid, run_app, run_args);
+    return mainNsp::start_debugger(attach_pid, run_app, run_args);
 }
+
+
+}
+#if !defined(TEST_BUILD)
+//------------------------------------------------------------------------------
+// Name: main
+// Desc: entry point
+//------------------------------------------------------------------------------
+int main(int argc, char *argv[]) {
+    return mainNsp::start(argc,argv);
+}
+#endif
+
