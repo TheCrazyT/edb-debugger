@@ -1,5 +1,12 @@
-
 edb is available under the GPL 2 license, see the COPYING for details.
+
+Edit for Ubuntu 13.10:
+=========================
+sudo apt-get install libboost1.54-dev libqt5xmlpatterns5-dev qtbase5-dev qt5-default
+qmake
+make
+./edb
+=========================
 
 NOTE: This README now only covers the most essential documentation, for more
 complete documentation see the html files in the doc/ directory.
