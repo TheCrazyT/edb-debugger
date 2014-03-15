@@ -25,10 +25,12 @@ namespace Test{
             Debugger* mainWindow;
             QEventLoop* loop;
             QEventLoop* loop2;
+            bool testStarted;
 
         private slots:
             void initTestCase();
-            void test();
+            void singleStep();
+            void restart();
             void cleanupTestCase();
             void getEntryPoint(edb::address_t addr);
             void start();

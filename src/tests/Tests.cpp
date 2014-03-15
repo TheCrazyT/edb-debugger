@@ -24,13 +24,17 @@ namespace Test{
     QThread* Tests::mainThread;
 
     void Tests::start(){
-        Tests* tcp = this;
-        exit(QTest::qExec(tcp, qApp->argc(), qApp->argv()));
+        if(!testStarted){
+            testStarted = true;
+            qDebug() << "start";
+            Tests* tcp = this;
+            exit(QTest::qExec(tcp, qApp->argc(), qApp->argv()));
+        }
     }
 
     void Tests::getEntryPoint(edb::address_t addr){
-        entryPoint = addr;
         qDebug() << "getEntryPoint" << addr;
+        entryPoint = addr;
         loop = 0;
     }
 
@@ -70,11 +74,11 @@ namespace Test{
         }
     }
 
-    void Tests::test()
+    void Tests::singleStep()
     {
 
+        qDebug() << "singleStep";
         QAction* action;
-        qDebug() << "Start test";
         //loop2->exec();
         edb::address_t entryPoint = getEntryPoint();
         qDebug() << "Current addr:" << entryPoint;
@@ -99,15 +103,16 @@ namespace Test{
             qFatal("single step failed!(%x,%x)",entryPoint,state.instruction_pointer());
         }
         sleep(1);
-
+    }
+    void Tests::restart(){
         qDebug() << "restart";
         mainWindow->findChild<QAction*>(QString("action_Restart"));
-        qDebug() << "End Start";
+        qDebug() << "End restart";
 
     }
     void Tests::cleanupTestCase(){
+        qDebug() << "cleanupTestCase ...";
         QAction* action;
-        qDebug() << "Cleanup ...";
         sleep(1);
         qDebug() << "Closing ...";
         action = mainWindow->findChild<QAction*>(QString("actionE_xit"));
@@ -120,6 +125,7 @@ namespace Test{
 
 int main(int argc, char *argv[])
 {
+    qDebug() << "main";
     Test::Tests tc;
     tc.mainThread = QThread::currentThread();
     QThread* testThread = new QThread();
