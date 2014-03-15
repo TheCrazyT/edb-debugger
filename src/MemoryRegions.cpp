@@ -98,6 +98,7 @@ IRegion::pointer MemoryRegions::find_region(edb::address_t address) const {
 			return i;
 		}
 	}
+    qDebug() << "no matching region found!";
 	return IRegion::pointer();
 }
 

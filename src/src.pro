@@ -89,7 +89,9 @@ HEADERS += \
         SessionObject.h \
         SessionObjectWriter.h \
     BasicRegion.h \
-    main.h
+    main.h \
+    tests/Tests.h \
+    tests/MainThreadObject.h
 
 FORMS += \
 	BinaryString.ui \
@@ -143,7 +145,8 @@ SOURCES += \
         SessionObject.cpp \
         SessionObjectWriter.cpp \
     BasicRegion.cpp \
-    tests/TestApp.cpp
+    tests/TestApp.cpp \
+    tests/MainThreadObject.cpp
 
 # QHexView stuff
 INCLUDEPATH += qhexview
@@ -234,8 +237,9 @@ unix {
 
 CONFIG(TEST){
     message(Compiling Test build)
-    CONFIG  -= debug
+    CONFIG  += debug
     CONFIG  += qtestlib
+    QT += testlib
     SOURCES += tests/Tests.cpp
     TARGET   = tests
     DEFINES += TEST_BUILD

@@ -4,7 +4,11 @@
 #include "ISymbolManager.h"
 #include "Debugger.h"
 #include "Symbol.h"
+#include "Tests.h"
+#include "State.h"
+#include "MainThreadObject.h"
 #include "Configuration.h"
+#include "IDebuggerCore.h"
 
 #include <QtTest/QtTest>
 #include <QMessageBox>
@@ -15,108 +19,131 @@
 #include <QMainWindow>
 
 #if defined(TEST_BUILD)
-namespace{
-    #if defined(__linux__)
-        char* testApp = "./TestApp";
-    #else
-        char* testApp = "./TestApp.exe";
-    #endif
+namespace Test{
 
-    class MainThread : public QThread
-    {
-         Q_OBJECT
+    QThread* Tests::mainThread;
 
-     protected:
-         void run();
-    };
-
-    void MainThread::run()
-    {
-        int argc=3;
-        char **argv = new char*[2];
-
-        if(qApp->argc()>0){
-            argv[0] = qApp->argv()[0];
-        }
-        argv[1] = "--run";
-        argv[2] = testApp;
-
-        sleep(1);
-        qDebug("Starting ...");
-        mainNsp::start(argc,argv);
+    void Tests::start(){
+        Tests* tcp = this;
+        exit(QTest::qExec(tcp, qApp->argc(), qApp->argv()));
     }
 
+    void Tests::getEntryPoint(edb::address_t addr){
+        entryPoint = addr;
+        qDebug() << "getEntryPoint" << addr;
+        loop = 0;
+    }
 
-    class Tests: public QObject
-    {
-         Q_OBJECT
-        private slots:
-            void initTestCase();
-            void test();
-            void cleanupTestCase();
-        private:
-            MainThread *mt;
-    };
+    edb::address_t Tests::getEntryPoint(){
+        qDebug() << "getEntryPoint";
+        qDebug() << "(threadid=" << QThread::currentThread() << ")";
+
+        emit getEntryPointSig();
+        qDebug() << "sleeping till entrypoint changes ...";
+        if(loop != 0){
+            loop->exec();
+        }else{
+            qFatal("loop = 0");
+        }
+        qDebug() << "sleeping done(entrypoint=" << entryPoint << ")";
+        return entryPoint;
+    }
+
     void Tests::initTestCase()
     {
-        QString file = QString("sessions/TestApp.edb");
+        qRegisterMetaType<edb::address_t>("edb::address_t");
+        loop = new QEventLoop();
+        loop2 = new QEventLoop();
+        MTO::MainThreadObject* mt = new MTO::MainThreadObject();
+        mt->moveToThread(mainThread);
+        if(!QObject::connect(this, SIGNAL(getEntryPointSig()), mt, SLOT(getEntryPoint())))qFatal("connection failed 3");
+        if(!QObject::connect(mt, SIGNAL(getEntryPointFinishedSig()), loop, SLOT(quit())))qFatal("connection failed 4");
+        if(!QObject::connect(mt, SIGNAL(getEntryPointSig(edb::address_t)), this, SLOT(getEntryPoint(edb::address_t))))qFatal("connection failed 5");
+
+        qDebug() << "TestThread:" << QThread::currentThread();
+        entryPoint = 0;
+        qDebug() << "Start initTestCase";
+        QString file = QString("./sessions/TestApp.edb");
         if(QFile::exists(file)){
             qDebug() << "Deleted: " << file;
             QFile::remove(file);
         }
-
-        mt = new MainThread();
-        mt->start();
     }
+
     void Tests::test()
     {
-        sleep(2);
-        quint32 i = 60;
 
-        edb::address_t entryPoint = 0;
-        while((entryPoint==0)&&(i>0)){
-            const QString mainSymbol = QFileInfo(testApp).fileName() + "::main";
-            const Symbol::pointer sym = edb::v1::symbol_manager().find(mainSymbol);
-
-            if(sym) {
-                entryPoint = sym->address;
-            } else if(edb::v1::config().find_main) {
-                entryPoint = edb::v1::locate_main_function();
-            }
-            i--;
-            sleep(1);
-            qDebug() << "Addr == 0 (" << i << ")";
-        }
-        if(i == 0){
-            qFatal("Addr == 0.");
-        }
+        QAction* action;
+        qDebug() << "Start test";
+        //loop2->exec();
+        edb::address_t entryPoint = getEntryPoint();
         qDebug() << "Current addr:" << entryPoint;
-        /*edb::v1::create_breakpoint(entryPoint);
-        sleep(1);
-        edb::v1::remove_breakpoint(entryPoint);
-        sleep(1);*/
-        Debugger* mainWindow;
+
         QWidgetList allToplevelWidgets = QApplication::topLevelWidgets();
         foreach (QWidget *w, allToplevelWidgets) {
              if (w->inherits("QMainWindow")) {
                  mainWindow = (Debugger*)w;
              }
         }
-        //qDebug() << "Triggering restart";
-        //mainWindow->on_action_Restart_triggered();
-        sleep(1);
-        qDebug() << "Closing ...";
-        QAction* action = mainWindow->findChild<QAction*>(QString("actionE_xit"));
+
+        qDebug() << "single step";
+        action = mainWindow->findChild<QAction*>(QString("action_Step_Into"));
         action->trigger();
+        qDebug() << "after single step";
+
+        sleep(1);
+
+        State state;
+        edb::v1::debugger_core->get_state(&state);
+        if(entryPoint == state.instruction_pointer()){
+            qFatal("single step failed!(%x,%x)",entryPoint,state.instruction_pointer());
+        }
+        sleep(1);
+
+        qDebug() << "restart";
+        mainWindow->findChild<QAction*>(QString("action_Restart"));
+        qDebug() << "End Start";
 
     }
     void Tests::cleanupTestCase(){
+        QAction* action;
         qDebug() << "Cleanup ...";
-        mt->terminate();
+        sleep(1);
+        qDebug() << "Closing ...";
+        action = mainWindow->findChild<QAction*>(QString("actionE_xit"));
+        action->trigger();
+        sleep(1);
+        mainThread->terminate();
     }
 
 }
 
-QTEST_MAIN(Tests)
+int main(int argc, char *argv[])
+{
+    Test::Tests tc;
+    tc.mainThread = QThread::currentThread();
+    QThread* testThread = new QThread();
+    tc.moveToThread(testThread);
+    QObject::connect(testThread,SIGNAL(started()),&tc,SLOT(start()));
+    testThread->start();
+
+    qDebug() << "run" << "(threadid=" << QThread::currentThread() << ")";
+    int argc2=3;
+    char **argv2 = new char*[2];
+
+    if(qApp->argc()>0){
+        argv2[0] = qApp->argv()[0];
+    }
+    argv2[1] = "--run";
+    argv2[2] = Test::testApp;
+
+    sleep(1);
+    qDebug() << "Starting ...(threadid=" << QThread::currentThread() << ")";
+    mainNsp::start(argc2,argv2);
+    qDebug() << "start finished";
+}
+
+//QTEST_MAIN(Test::Tests)
+//QTEST_APPLESS_MAIN(Test::Tests)
 #include "Tests.moc"
 #endif

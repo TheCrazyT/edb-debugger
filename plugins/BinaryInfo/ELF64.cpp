@@ -56,8 +56,12 @@ bool ELF64::validate_header() {
 	if(header_) {
 		if(std::memcmp(header_->e_ident, ELFMAG, SELFMAG) == 0) {
 			return header_->e_ident[EI_CLASS] == ELFCLASS64;
-		}
-	}
+        }else{
+            qDebug() << "magic code mismatch:" << *header_->e_ident << " offset:" << (int*)region_->start();
+        }
+    }else{
+        qDebug() << "header pointer not set!";
+    }
 	return false;
 }
 
@@ -92,6 +96,7 @@ void ELF64::read_header() {
 	
 			if(!edb::v1::debugger_core->read_bytes(region_->start(), header_, sizeof(plugin::binary_info::elf64_header))) {
 				std::memset(header_, 0, sizeof(plugin::binary_info::elf64_header));
+                qDebug() << "unable to read header";
 			}
 		}
 	}

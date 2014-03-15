@@ -24,6 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "edb.h"
 #include "version.h"
 #include "main.h"
+#if defined(TEST_BUILD)
+    #include "tests/Tests.h"
+    #include "tests/MainThreadObject.h"
+    #include <QEventLoop>
+#endif
+
 
 #include <QApplication>
 #include <QDir>
@@ -33,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPluginLoader>
 #include <QTranslator>
 #include <QtDebug>
+#include <QThread>
 
 #include <ctime>
 #include <iostream>
@@ -120,11 +127,19 @@ int start_debugger(edb::pid_t attach_pid, const QString &program, const QList<QB
 		} else if(!program.isEmpty()) {
             qDebug() << "Open program" << program;
 			debugger.execute(program, programArgs);
+            qDebug() << "after execute.";
 		}
-#if !defined(TEST_BUILD)
-		return qApp->exec();
+#if defined(TEST_BUILD)
+        qDebug() << "Finished start_debugger.(threadid=" << QThread::currentThread() << ")";
+        QEventLoop loop;
+        MTO::MainThreadObject::getInstance()->sendFinishedInit();
+        //Destructor of debugger should not be called!
+        loop.exec();
+        return 0;
+
 #else
-        qDebug() << "Finished start_debugger";
+        qDebug() << "Executing ...";
+        return qApp->exec();
 #endif
 	}
 }

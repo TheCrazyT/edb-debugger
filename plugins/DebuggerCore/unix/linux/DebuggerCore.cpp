@@ -220,6 +220,7 @@ int get_user_stat(edb::pid_t pid, struct user_stat *user_stat) {
 	Q_ASSERT(user_stat);
 
 	int r = -1;
+    qDebug() << "get_user_stat:" << pid;
 	QFile file(QString("/proc/%1/stat").arg(pid));
 	if(file.open(QIODevice::ReadOnly)) {
 		QTextStream in(&file);

@@ -395,7 +395,8 @@ bool DebuggerCoreUNIX::read_bytes(edb::address_t address, void *buf, std::size_t
 
 		if(!ok) {
 			while(len--) {
-				*p++ = 0xff;
+                //*p++ = 0xff;
+                return false;
 			}
 		}
 	}

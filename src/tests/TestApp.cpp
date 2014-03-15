@@ -1,6 +1,5 @@
 #if defined(TEST_APP)
-//g++ TestApp.cpp -o ../../TestApp -D TEST_APP
-
+//g++ TestApp.cpp -g -o ../../TestApp -D TEST_APP
     #include <iostream>
     using namespace std;
 

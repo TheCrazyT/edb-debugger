@@ -36,6 +36,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SymbolManager.h"
 #include "version.h"
 
+#include <QThread>
+#include <QDebug>
 #include <QAction>
 #include <QAtomicPointer>
 #include <QByteArray>
@@ -795,8 +797,11 @@ IBinary *get_binary_info(const IRegion::pointer &region) {
 		IBinary *const p = (*f)(region);
 
 		if(p->validate_header()) {
+            qDebug() << "Validation successful for function:" << (int*)f << " for region:" << region.data();
 			return p;
-		}
+        }else{
+            qDebug() << "can't validate function:" << (int*)f << " for region:" << region.data();
+        }
 
 		delete p;
 	}
@@ -811,9 +816,15 @@ IBinary *get_binary_info(const IRegion::pointer &region) {
 //------------------------------------------------------------------------------
 address_t locate_main_function() {
 
+    qDebug() << "locate_main_function(threadid=" << QThread::currentThread() << ")";
 	if(debugger_core) {
 
 		const address_t address = debugger_core->process_code_address();
+        if(address == 0) {
+            qDebug() << "no process_code_address!";
+        }else{
+            qDebug() << "process_code_address:" << (int*)address;
+        }
 		memory_regions().sync();
 		if(IRegion::pointer region = memory_regions().find_region(address)) {
 
@@ -821,15 +832,21 @@ address_t locate_main_function() {
 			if(binfo) {
 				const address_t main_func = binfo->calculate_main();
 				if(main_func != 0) {
+                    qDebug() << "main_func:" << main_func << " (address=" << address << ",region=" << region.data() << ")";
 					return main_func;
 				} else {
 					return binfo->entry_point();
 				}
-			}
+            }else{
+                qDebug() << "region found, but no binfo!(address=" << address << ",region=" << region.data() << ")";
+            }
 		}
-	}
+    }else{
+        qDebug() << "no debugger_core!";
+    }
 
-	return 0;
+    qDebug() << "no main_func found!";
+    return 0;
 }
 
 //------------------------------------------------------------------------------

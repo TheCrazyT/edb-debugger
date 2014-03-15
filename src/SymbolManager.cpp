@@ -89,8 +89,10 @@ void SymbolManager::load_symbol_file(const QString &filename, edb::address_t bas
 // Desc:
 //------------------------------------------------------------------------------
 const Symbol::pointer SymbolManager::find(const QString &name) const {
+    qDebug() << "Finding symbol:" << name;
 	QHash<QString, Symbol::pointer>::const_iterator it = symbols_by_name_.find(name);
 	if(it != symbols_by_name_.end()) {
+        qDebug() << "Success in finding symbol:" << name << "(" << it.value() <<  ")";
 		return it.value();
 	}
 	return Symbol::pointer();

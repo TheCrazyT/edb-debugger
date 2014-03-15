@@ -2162,7 +2162,7 @@ QString Debugger::session_filename() const {
 // Desc:
 //------------------------------------------------------------------------------
 void Debugger::detach_from_process(DETACH_ACTION kill) {
-
+    qDebug() << "detach_from_process";
 	if(ISessionFile *const session_file = edb::v1::session_file_handler()) {
 		const QString filename = session_filename();
 		if(!filename.isEmpty()) {
