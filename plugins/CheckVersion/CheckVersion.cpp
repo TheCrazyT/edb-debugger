@@ -50,10 +50,12 @@ CheckVersion::~CheckVersion() {
 // Desc:
 //------------------------------------------------------------------------------
 void CheckVersion::private_init() {
+#if !defined(TEST_BUILD)
 	QSettings settings;
 	if(settings.value("CheckVersion/check_on_start.enabled", true).toBool()) {
 		do_check();
 	}
+#endif
 }
 
 //------------------------------------------------------------------------------

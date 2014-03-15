@@ -12,7 +12,6 @@ namespace Test{
     static char* testApp = "./TestApp.exe";
 #endif
     static QEventLoop* mainLoop;
-    //static MainThreadObject* mt;
 
     class Tests: public QObject
     {

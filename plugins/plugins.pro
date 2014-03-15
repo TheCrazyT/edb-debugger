@@ -28,3 +28,12 @@ unix {
 	}
 }
 
+CONFIG(TEST){
+    message(Compiling Test build)
+    CONFIG  += debug
+    CONFIG  += qtestlib
+    QT += testlib
+    SOURCES += tests/Tests.cpp
+    TARGET   = tests
+    DEFINES += TEST_BUILD
+}
